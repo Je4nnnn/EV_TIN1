@@ -1,0 +1,53 @@
+.home-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  margin-left: 30px; 
+  margin-top: 30px;
+}
+
+.title {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.calendar-container {
+  flex: 2;
+  margin-right: 20px;
+}
+
+.table-prices-container {
+  flex: 1;
+  border: #e0e0e0 2px solid;
+}
+
+.time-container {
+  margin-top: 20px;
+}
+
+.confirm-button {
+  margin-top: 20px;
+  background-color: #1976d2;
+  color: white;
+}
+
+.confirm-button:hover {
+  background-color: #115293;
+}
+
+/* despues pongo la fotito !!!!!*/
+.kart-image {
+  position: absolute; 
+  top: 75%; 
+  right: -800px; 
+  transform: translateY(-50%); 
+  width: 750px; 
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+

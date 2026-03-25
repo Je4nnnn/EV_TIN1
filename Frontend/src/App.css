@@ -1,0 +1,23 @@
+html, body {
+  background-color: #0c0820; 
+  margin: 0; 
+  padding: 0; 
+  height: 100%; 
+  width: 100%; 
+}
+
+.App {
+  background-color: #0c0820; 
+  min-height: 100vh; 
+  width: 100%; 
+}
+
+.rack-page {
+  background-color: white;
+  min-height: 100vh;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
