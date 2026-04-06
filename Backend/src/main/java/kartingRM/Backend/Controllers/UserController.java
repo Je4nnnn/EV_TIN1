@@ -20,6 +20,7 @@ public class UserController {
     public List<UserEntity> getAllUsers() {
         return userService.getAllUsers();
     }
+
     @GetMapping("/{id}")
     public UserEntity getUserById(@PathVariable("id") long id) {
         return userService.findUserById(id);
@@ -30,8 +31,28 @@ public class UserController {
         if (user.getRut() == null || user.getRut().isEmpty()) {
             return ResponseEntity.badRequest().body(null);
         }
+        if (user.getName() == null || user.getName().isEmpty()) {
+            return ResponseEntity.badRequest().body(null);
+        }
+
+        // Verificar si el usuario ya existe por RUT
+        UserEntity existing = userService.getUserByRut(user.getRut());
+        if (existing != null) {
+            return ResponseEntity.ok(existing);
+        }
+
         UserEntity savedUser = userService.saveUser(user);
-        return ResponseEntity.ok(savedUser);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UserEntity> updateUser(@PathVariable("id") Long id, @RequestBody UserEntity user) {
+        try {
+            UserEntity updatedUser = userService.updateUser(id, user);
+            return ResponseEntity.ok(updatedUser);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
     }
 
     @PutMapping("/{id}/update-category")
@@ -54,7 +75,7 @@ public class UserController {
         }
     }
 
-    @GetMapping("/findByRut/{rut}")
+    @GetMapping("/findByRut/{rut:.+}")
     public ResponseEntity<UserEntity> getUserByRut(@PathVariable String rut) {
         UserEntity user = userService.getUserByRut(rut);
         if (user != null) {

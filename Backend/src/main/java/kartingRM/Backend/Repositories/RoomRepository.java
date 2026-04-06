@@ -1,9 +1,12 @@
 package kartingRM.Backend.Repositories;
 
-import kartingRM.Backend.Entities.ReserveEntity;
+import kartingRM.Backend.Entities.RoomEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
-public interface ReserveRepository extends JpaRepository<ReserveEntity, Long> {
+public interface RoomRepository extends JpaRepository<RoomEntity, Long> {
+
 }

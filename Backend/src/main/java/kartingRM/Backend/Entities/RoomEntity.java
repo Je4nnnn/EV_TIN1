@@ -8,20 +8,20 @@ import lombok.Setter;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "karts")
+@Table(name = "rooms")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class KartEntity {
+public class RoomEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(unique = true, nullable = false)
     private Long id;
-    private String code;
-    private String model;
+    private String roomNumber;
+    private String type;
     private String status;
     
 }

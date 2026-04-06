@@ -6,45 +6,63 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-
-function createData(vueltas, precios, duracion) {
-  return {vueltas, precios, duracion};
-}
+import Typography from '@mui/material/Typography';
 
 const rows = [
-  createData('10 vueltas o máx 10 min', '$15.000', '30 min'),
-  createData('15 vueltas o máx 15 min', '$20.000', '35 min'),
-  createData('20 vueltas o máx 20 min', '$25.000', '40 min'),
+  {
+    tipo:     'Simple',
+    manana:   '$30.000',
+    noche:    '$50.000',
+    completo: '$70.000',
+  },
+  {
+    tipo:     'Doble',
+    manana:   '$48.000',
+    noche:    '$80.000',
+    completo: '$112.000',
+  },
+  {
+    tipo:     'Suite',
+    manana:   '$90.000',
+    noche:    '$150.000',
+    completo: '$210.000',
+  },
 ];
-
-// Tablita para ver los precios por si alguien queire consultar
 
 export default function BasicTablePrices() {
   return (
-    <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} aria-label="simple table">
-        <TableHead>
-          <TableRow>
-            <TableCell>Número de vueltas o tiempo máximo permitido</TableCell>
-            <TableCell align="right">Precios regulares</TableCell>
-            <TableCell align="right">Duración total de la reserva</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow
-              key={row.name}
-              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-            >
-              <TableCell component="th" scope="row">
-                {row.vueltas}
-              </TableCell>
-              <TableCell align="right">{row.precios}</TableCell>
-              <TableCell align="right">{row.duracion}</TableCell>
+    <>
+      <Typography variant="h6" gutterBottom>
+        Tarifas por Habitación y Turno
+      </Typography>
+      <TableContainer component={Paper}>
+        <Table sx={{ minWidth: 400 }} aria-label="tabla de precios">
+          <TableHead>
+            <TableRow>
+              <TableCell><strong>Habitación</strong></TableCell>
+              <TableCell align="right"><strong>Turno Mañana</strong></TableCell>
+              <TableCell align="right"><strong>Turno Noche</strong></TableCell>
+              <TableCell align="right"><strong>Día Completo</strong></TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow
+                key={row.tipo}
+                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+              >
+                <TableCell component="th" scope="row">{row.tipo}</TableCell>
+                <TableCell align="right">{row.manana}</TableCell>
+                <TableCell align="right">{row.noche}</TableCell>
+                <TableCell align="right">{row.completo}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+        * Precios por noche. Descuentos por frecuencia y grupo se aplican automáticamente.
+      </Typography>
+    </>
   );
 }

@@ -163,4 +163,13 @@ public class UserService {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
     }
+
+    public UserEntity updateUser(Long id, UserEntity updatedUser) {
+        UserEntity existing = findUserById(id);
+        if (updatedUser.getName() != null) existing.setName(updatedUser.getName());
+        if (updatedUser.getEmail() != null) existing.setEmail(updatedUser.getEmail());
+        if (updatedUser.getPhoneNumber() != null) existing.setPhoneNumber(updatedUser.getPhoneNumber());
+        if (updatedUser.getDateBirthday() != null) existing.setDateBirthday(updatedUser.getDateBirthday());
+        return userRepository.save(existing);
+    }
 }

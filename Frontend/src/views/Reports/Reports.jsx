@@ -29,6 +29,7 @@ const Reports = () => {
     useEffect(() => {
         fetchReporte();
         fetchReporteParticipantesData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fechaInicio, fechaFin]);
 
     return (

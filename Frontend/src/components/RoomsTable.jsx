@@ -6,55 +6,55 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import { getKarts } from '../services/KartsService';
+import { getRooms } from '../services/RoomsService';
 
-export default function KartsTable() {
-  const [karts, setKarts] = useState([]);
+export default function RoomsTable() {
+  const [rooms, setRooms] = useState([]);
 
   useEffect(() => {
-    const fetchKarts = async () => {
+    const fetchRooms = async () => {
       try {
-        const response = await getKarts();
-        setKarts(Array.isArray(response) ? response : response.data || []);
+        const response = await getRooms();
+        setRooms(Array.isArray(response) ? response : response.data || []);
       } catch (error) {
-        console.error('Error fetching karts:', error);
-        setKarts([]); 
+        console.error('Error fetching rooms:', error);
+        setRooms([]); 
       }
     };
 
-    fetchKarts();
+    fetchRooms();
   }, []);
 
   return (
     <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} aria-label="karts table">
+      <Table sx={{ minWidth: 650 }} aria-label="rooms table">
         <TableHead>
           <TableRow>
-            <TableCell>Kart ID</TableCell>
-            <TableCell align="right">Code</TableCell>
-            <TableCell align="right">Model</TableCell>
+            <TableCell>Room ID</TableCell>
+            <TableCell align="right">Room Number</TableCell>
+            <TableCell align="right">Type</TableCell>
             <TableCell align="right">Status</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {Array.isArray(karts) && karts.length > 0 ? (
-            karts.map((kart) => (
+          {Array.isArray(rooms) && rooms.length > 0 ? (
+            rooms.map((room) => (
               <TableRow
-                key={kart.id}
+                key={room.id}
                 sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
               >
                 <TableCell component="th" scope="row">
-                  {kart.id}
+                  {room.id}
                 </TableCell>
-                <TableCell align="right">{kart.code}</TableCell>
-                <TableCell align="right">{kart.model}</TableCell>
-                <TableCell align="right">{kart.status}</TableCell>
+                <TableCell align="right">{room.roomNumber}</TableCell>
+                <TableCell align="right">{room.type}</TableCell>
+                <TableCell align="right">{room.status}</TableCell>
               </TableRow>
             ))
           ) : (
             <TableRow>
               <TableCell colSpan={4} align="center">
-                No hay carritos
+                No hay habitaciones
               </TableCell>
             </TableRow>
           )}

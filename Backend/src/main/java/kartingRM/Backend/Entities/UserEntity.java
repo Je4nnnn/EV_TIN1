@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "users")
 @Data
@@ -27,6 +29,10 @@ public class UserEntity {
     private String name;
     private String email;
     private String phoneNumber;
+
+    // Fecha de nacimiento del usuario
+    private LocalDate dateBirthday;
+
     private String category_frecuency = "No frecuente";
-    private int numberVisits = 0;
+    private Integer numberVisits = 0;
 }

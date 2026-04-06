@@ -9,7 +9,7 @@ export const Navbar = () => {
     return (
       <nav>
         <Link to="/" className="title">
-          KartingRM
+          HotelRM
         </Link>
         <div className="menu" onClick={() => setMenuOpen(!menuOpen)}>
           <span></span>
@@ -18,7 +18,7 @@ export const Navbar = () => {
         </div>
         <ul className={menuOpen ? "open" : ""}>
           <li>
-            <NavLink to="/karts">Carritos</NavLink>
+            <NavLink to="/rooms">Habitaciones</NavLink>
           </li>
           <li>
             <NavLink to="/prices">Precios</NavLink>
