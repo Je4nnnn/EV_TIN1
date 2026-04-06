@@ -3,72 +3,67 @@ import axios from 'axios';
 const API_URL = `${import.meta.env.VITE_PAYROLL_BACKEND_SERVER}/api/v1/reservations`;
 const USER_API_URL = `${import.meta.env.VITE_PAYROLL_BACKEND_SERVER}/api/users`;
 
-/**
- * Limpia el RUT de puntos y guion, dejándolo solo con números y K.
- */
 const cleanRut = (rut) => {
   return rut ? rut.replace(/[.-]/g, '').toUpperCase() : '';
 };
 
-/**
- * Normaliza la fecha a formato YYYY-MM-DD para el backend.
- */
 const formatDateToISO = (dateStr) => {
   if (!dateStr) return null;
-  // Si ya viene en formato ISO YYYY-MM-DD, lo dejamos igual
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
-  
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr;
+  }
+
   try {
     const d = new Date(dateStr);
     if (!isNaN(d.getTime())) {
       return d.toISOString().split('T')[0];
     }
   } catch (e) {
-    console.warn("No se pudo formatear la fecha:", dateStr);
+    console.warn('No se pudo formatear la fecha:', dateStr);
   }
+
   return null;
 };
 
 /**
- * Procesa los huéspedes: busca o crea usuarios por RUT, incrementa visitas si ya existen.
- * Devuelve el array con el userId de cada persona.
+ * Procesa los huéspedes: busca o crea usuarios por RUT.
+ * OJO: aquí ya NO se incrementan visitas.
+ * Las visitas deben incrementarse solo cuando la reserva se confirma en backend.
  */
 export const processParticipants = async (personas) => {
   try {
     const participantesConUsuarios = await Promise.all(
-      personas.map(async (persona) => {
-        if (!persona.nombre || !persona.rut) {
-          throw new Error('Debe completar los datos de todos los huéspedes (nombre y RUT).');
-        }
+        personas.map(async (persona) => {
+          if (!persona.nombre || !persona.rut) {
+            throw new Error('Debe completar los datos de todos los huéspedes (nombre y RUT).');
+          }
 
-        const cleanedRut = cleanRut(persona.rut);
-        let usuario = await getUserByRut(cleanedRut);
+          const cleanedRut = cleanRut(persona.rut);
+          let usuario = await getUserByRut(cleanedRut);
 
-        if (!usuario) {
-          // Crear usuario nuevo con campos correctos del backend
-          usuario = await createUser({
-            name: persona.nombre,
-            rut: cleanedRut,
-            email: persona.email || '',
-            phoneNumber: persona.telefono || '',
-            dateBirthday: formatDateToISO(persona.fechaCumpleanos),
-          });
-        } else {
-          // Usuario existente: actualizar datos si cambiaron (birthday, email, etc.)
-          await updateUser(usuario.id, {
-            name: persona.nombre,
-            email: persona.email || usuario.email,
-            phoneNumber: persona.telefono || usuario.phoneNumber,
-            dateBirthday: formatDateToISO(persona.fechaCumpleanos) || usuario.dateBirthday,
-          });
-          await incrementVisitsAndUpdateCategory(usuario.id);
-        }
+          if (!usuario) {
+            usuario = await createUser({
+              name: persona.nombre,
+              rut: cleanedRut,
+              email: persona.email || '',
+              phoneNumber: persona.telefono || '',
+              dateBirthday: formatDateToISO(persona.fechaCumpleanos),
+            });
+          } else {
+            await updateUser(usuario.id, {
+              name: persona.nombre,
+              email: persona.email || usuario.email || '',
+              phoneNumber: persona.telefono || usuario.phoneNumber || '',
+              dateBirthday: formatDateToISO(persona.fechaCumpleanos) || usuario.dateBirthday || null,
+            });
+          }
 
-        return {
-          ...persona,
-          userId: usuario.id,
-        };
-      })
+          return {
+            ...persona,
+            userId: usuario.id,
+          };
+        })
     );
 
     return participantesConUsuarios;
@@ -115,7 +110,7 @@ export const confirmReserve = async (reserve) => {
 export const getUserByRut = async (rut) => {
   try {
     const cleanedRut = cleanRut(rut);
-    const response = await axios.get(`${USER_API_URL}/findByRut/${cleanedRut}`);
+    const response = await axios.get(`${USER_API_URL}/findByRut/${encodeURIComponent(cleanedRut)}`);
     return response.data;
   } catch (error) {
     if (error.response && error.response.status === 404) {
@@ -147,6 +142,7 @@ export const updateUser = async (userId, userdata) => {
   } catch (error) {
     console.error('Error updating user:', error);
     // No lanzar error si falla actualización de datos no críticos
+    return null;
   }
 };
 

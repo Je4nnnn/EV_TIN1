@@ -14,79 +14,73 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    // Método para actualizar la categoría de frecuencia del usuario
-    // Despues veo si es necesario
-    public UserEntity updateCategoryFrequency(Long userId) {
-        Optional<UserEntity> optionalUser = userRepository.findById(userId);
+    private String calcularCategoriaPorVisitas(Integer visits) {
+        int cantidad = (visits == null || visits < 0) ? 0 : visits;
 
-        if (optionalUser.isPresent()) {
-            UserEntity user = optionalUser.get();
-
-            int visits = user.getNumberVisits();
-            if (visits >= 7) {
-                user.setCategory_frecuency("Muy frecuente");
-            } else if (visits >= 5) {
-                user.setCategory_frecuency("Frecuente");
-            } else if (visits >= 2) {
-                user.setCategory_frecuency("Regular");
-            } else {
-                user.setCategory_frecuency("No frecuente");
-            }
-
-            return userRepository.save(user);
+        if (cantidad >= 7) {
+            return "Muy frecuente";
+        } else if (cantidad >= 5) {
+            return "Frecuente";
+        } else if (cantidad >= 2) {
+            return "Regular";
         } else {
-            throw new RuntimeException("Usuario no encontrado con ID: " + userId);
+            return "No frecuente";
         }
     }
 
-    // Método para actualizar el número de visitas y la categoría de frecuencia
-    // Despues veo si es necesario
-    public UserEntity updateNumberVisits(Long userId, int newVisits) {
-        Optional<UserEntity> optionalUser = userRepository.findById(userId);
-    
-        if (optionalUser.isPresent()) {
-            UserEntity user = optionalUser.get();
-            user.setNumberVisits(newVisits);
-    
-            if (newVisits >= 7) {
-                user.setCategory_frecuency("Muy frecuente");
-            } else if (newVisits >= 5) {
-                user.setCategory_frecuency("Frecuente");
-            } else if (newVisits >= 2) {
-                user.setCategory_frecuency("Regular");
-            } else {
-                user.setCategory_frecuency("No frecuente");
-            }
-    
-            return userRepository.save(user);
-        } else {
-            throw new RuntimeException("Usuario no encontrado con ID: " + userId);
+    private boolean normalizarUsuario(UserEntity user) {
+        boolean modificado = false;
+
+        if (user.getNumberVisits() == null || user.getNumberVisits() < 0) {
+            user.setNumberVisits(0);
+            modificado = true;
         }
+
+        if (user.getCategory_frecuency() == null || user.getCategory_frecuency().isBlank()) {
+            user.setCategory_frecuency(calcularCategoriaPorVisitas(user.getNumberVisits()));
+            modificado = true;
+        }
+
+        return modificado;
+    }
+
+    private UserEntity obtenerUsuarioNormalizado(Long userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + userId));
+
+        if (normalizarUsuario(user)) {
+            user = userRepository.save(user);
+        }
+
+        return user;
+    }
+
+    public UserEntity updateCategoryFrequency(Long userId) {
+        UserEntity user = obtenerUsuarioNormalizado(userId);
+        user.setCategory_frecuency(calcularCategoriaPorVisitas(user.getNumberVisits()));
+        return userRepository.save(user);
+    }
+
+    public UserEntity updateNumberVisits(Long userId, int newVisits) {
+        UserEntity user = obtenerUsuarioNormalizado(userId);
+
+        int visitasSeguras = Math.max(newVisits, 0);
+        user.setNumberVisits(visitasSeguras);
+        user.setCategory_frecuency(calcularCategoriaPorVisitas(visitasSeguras));
+
+        return userRepository.save(user);
     }
 
     public UserEntity incrementVisitsAndUpdateCategory(Long userId) {
-        Optional<UserEntity> optionalUser = userRepository.findById(userId);
-    
-        if (optionalUser.isPresent()) {
-            UserEntity user = optionalUser.get();
-    
-            int newVisits = user.getNumberVisits() + 1;
-            user.setNumberVisits(newVisits);
-    
-            if (newVisits >= 7) {
-                user.setCategory_frecuency("Muy frecuente");
-            } else if (newVisits >= 5) {
-                user.setCategory_frecuency("Frecuente");
-            } else if (newVisits >= 2) {
-                user.setCategory_frecuency("Regular");
-            } else {
-                user.setCategory_frecuency("No frecuente");
-            }
-    
-            return userRepository.save(user);
-        } else {
-            throw new RuntimeException("Usuario no encontrado con ID: " + userId);
-        }
+        UserEntity user = obtenerUsuarioNormalizado(userId);
+
+        int visitasActuales = user.getNumberVisits() == null ? 0 : user.getNumberVisits();
+        int nuevasVisitas = visitasActuales + 1;
+
+        user.setNumberVisits(nuevasVisitas);
+        user.setCategory_frecuency(calcularCategoriaPorVisitas(nuevasVisitas));
+
+        return userRepository.save(user);
     }
 
     public List<UserEntity> getAllUsers() {
@@ -94,82 +88,105 @@ public class UserService {
     }
 
     public Optional<UserEntity> findUserByRut(String rut) {
-        return userRepository.findByRut(rut);
-    }
+        Optional<UserEntity> optionalUser = userRepository.findByRut(rut);
 
-
-    public UserEntity incrementVisits(String rut) {
-        Optional<UserEntity> optionalUser = findUserByRut(rut);
         if (optionalUser.isPresent()) {
             UserEntity user = optionalUser.get();
-            user.setNumberVisits(user.getNumberVisits() + 1);
-            return userRepository.save(user);
-        } else {
-            throw new RuntimeException("Usuario no encontrado con RUT: " + rut);
+            if (normalizarUsuario(user)) {
+                user = userRepository.save(user);
+            }
+            return Optional.of(user);
         }
+
+        return Optional.empty();
+    }
+
+    public UserEntity incrementVisits(String rut) {
+        UserEntity user = userRepository.findByRut(rut)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con RUT: " + rut));
+
+        if (normalizarUsuario(user)) {
+            user = userRepository.save(user);
+        }
+
+        int visitasActuales = user.getNumberVisits() == null ? 0 : user.getNumberVisits();
+        user.setNumberVisits(visitasActuales + 1);
+        user.setCategory_frecuency(calcularCategoriaPorVisitas(user.getNumberVisits()));
+
+        return userRepository.save(user);
     }
 
     public UserEntity saveUser(UserEntity user) {
+        if (user.getNumberVisits() == null || user.getNumberVisits() < 0) {
+            user.setNumberVisits(0);
+        }
+
+        if (user.getCategory_frecuency() == null || user.getCategory_frecuency().isBlank()) {
+            user.setCategory_frecuency(calcularCategoriaPorVisitas(user.getNumberVisits()));
+        }
+
         return userRepository.save(user);
     }
 
     public UserEntity getUserByRut(String rut) {
-        return userRepository.findByRut(rut).orElse(null);
+        Optional<UserEntity> optionalUser = userRepository.findByRut(rut);
+
+        if (optionalUser.isPresent()) {
+            UserEntity user = optionalUser.get();
+            if (normalizarUsuario(user)) {
+                user = userRepository.save(user);
+            }
+            return user;
+        }
+
+        return null;
     }
 
     public double obtenerDescuentoPorCategoria(Long userId) {
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + userId));
+        UserEntity user = obtenerUsuarioNormalizado(userId);
         String categoria = user.getCategory_frecuency();
-    
-        switch (categoria) {
-            case "Muy frecuente":
-                return 0.20; // 20%
-            case "Frecuente":
-                return 0.10; // 10%
-            case "Regular":
-                return 0.05; // 5%
-            default:
-                return 0.0; // No frecuente
-        }
+
+        return switch (categoria) {
+            case "Muy frecuente" -> 0.20;
+            case "Frecuente" -> 0.10;
+            case "Regular" -> 0.05;
+            default -> 0.0;
+        };
     }
 
     public String obtenerCategoriaCliente(Long userId) {
         if (userId == null) {
             throw new IllegalArgumentException("El ID del usuario no puede ser nulo.");
         }
-    
-        Optional<UserEntity> optionalUser = userRepository.findById(userId);
-    
-        if (optionalUser.isPresent()) {
-            UserEntity user = optionalUser.get();
-            int visits = user.getNumberVisits();
-    
-            if (visits >= 7) {
-                return "Muy frecuente";
-            } else if (visits >= 5) {
-                return "Frecuente";
-            } else if (visits >= 2) {
-                return "Regular";
-            } else {
-                return "No frecuente";
-            }
-        } else {
-            throw new RuntimeException("Usuario no encontrado con ID: " + userId);
-        }
+
+        UserEntity user = obtenerUsuarioNormalizado(userId);
+        return calcularCategoriaPorVisitas(user.getNumberVisits());
     }
 
     public UserEntity findUserById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
+        return obtenerUsuarioNormalizado(id);
     }
 
     public UserEntity updateUser(Long id, UserEntity updatedUser) {
         UserEntity existing = findUserById(id);
-        if (updatedUser.getName() != null) existing.setName(updatedUser.getName());
-        if (updatedUser.getEmail() != null) existing.setEmail(updatedUser.getEmail());
-        if (updatedUser.getPhoneNumber() != null) existing.setPhoneNumber(updatedUser.getPhoneNumber());
-        if (updatedUser.getDateBirthday() != null) existing.setDateBirthday(updatedUser.getDateBirthday());
+
+        if (updatedUser.getName() != null) {
+            existing.setName(updatedUser.getName());
+        }
+        if (updatedUser.getEmail() != null) {
+            existing.setEmail(updatedUser.getEmail());
+        }
+        if (updatedUser.getPhoneNumber() != null) {
+            existing.setPhoneNumber(updatedUser.getPhoneNumber());
+        }
+        if (updatedUser.getDateBirthday() != null) {
+            existing.setDateBirthday(updatedUser.getDateBirthday());
+        }
+
+        if (normalizarUsuario(existing)) {
+            return userRepository.save(existing);
+        }
+
         return userRepository.save(existing);
     }
 }

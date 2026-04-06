@@ -2,7 +2,6 @@ package kartingRM.Backend.Controllers;
 
 import kartingRM.Backend.Entities.ReservationDetailsEntity;
 import kartingRM.Backend.Entities.ReservationEntity;
-import kartingRM.Backend.Services.ReservationDetailsService;
 import kartingRM.Backend.Services.ReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -24,9 +23,6 @@ public class ReservationController {
     @Autowired
     private ReservationService reservationService;
 
-    @Autowired
-    private ReservationDetailsService reservationDetailsService;
-
     @PostMapping("/confirmar")
     public ResponseEntity<?> confirmarReserva(@RequestBody ReservationEntity reserva) {
         if (reserva.getDetails() == null || reserva.getDetails().isEmpty()) {
@@ -47,13 +43,27 @@ public class ReservationController {
             return ResponseEntity.badRequest().body("La reserva debe incluir una fecha de check-out.");
         }
 
-        if (reserva.getCheckOutDate().isBefore(reserva.getCheckInDate()) ||
-            reserva.getCheckOutDate().isEqual(reserva.getCheckInDate())) {
-            return ResponseEntity.badRequest().body("La fecha de check-out debe ser posterior a la de check-in.");
+        if (reserva.getCheckOutDate().isBefore(reserva.getCheckInDate())) {
+            return ResponseEntity.badRequest().body("La fecha de check-out no puede ser anterior a la de check-in.");
         }
 
-        if (reserva.getStayType() == null || reserva.getStayType().isEmpty()) {
+        if (reserva.getStayType() == null || reserva.getStayType().isBlank()) {
             return ResponseEntity.badRequest().body("Debe especificar el tipo de estancia (Mañana, Noche o Completo).");
+        }
+
+        if (reserva.getNumberOfGuests() == null || reserva.getNumberOfGuests() < 1) {
+            reserva.setNumberOfGuests(reserva.getDetails().size());
+        }
+
+        if (reserva.getNumberOfGuests() > 15) {
+            return ResponseEntity.badRequest().body("La cantidad máxima de huéspedes por reserva es 15.");
+        }
+
+        if (reserva.getCliente() == null || reserva.getCliente().getId() == null) {
+            Long primerUserId = reserva.getDetails().get(0).getUserId();
+            if (primerUserId == null) {
+                return ResponseEntity.badRequest().body("No se pudo determinar el cliente principal de la reserva.");
+            }
         }
 
         try {
