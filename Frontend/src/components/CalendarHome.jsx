@@ -1,18 +1,20 @@
-import React from 'react';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { TextField } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 
 export default function CalendarHome({ selectedDate, setSelectedDate }) {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <DatePicker
-        label="Selecciona un día"
+        label="Selecciona fecha"
         value={selectedDate}
         onChange={(newDate) => setSelectedDate(newDate)}
-        renderInput={(params) => <TextField {...params} />}
+        slotProps={{
+          textField: {
+            fullWidth: true,
+          },
+        }}
       />
     </LocalizationProvider>
-  );
+  )
 }

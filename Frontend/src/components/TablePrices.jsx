@@ -35,6 +35,9 @@ export default function BasicTablePrices() {
       <Typography variant="h6" gutterBottom>
         Tarifas por Habitación y Turno
       </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+        Turno manana: 08:30 a 18:30. Turno noche: 18:30 a 08:30.
+      </Typography>
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 400 }} aria-label="tabla de precios">
           <TableHead>

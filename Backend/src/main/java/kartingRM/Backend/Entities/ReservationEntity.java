@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -51,6 +52,24 @@ public class ReservationEntity {
 
     @Column(name = "final_amount")
     private Double finalAmount;
+
+    @Column(name = "room_id")
+    private Long roomId;
+
+    @Column(name = "room_number")
+    private String roomNumber;
+
+    @Column(name = "tourist_package_id")
+    private Long touristPackageId;
+
+    @Column(name = "tourist_package_name")
+    private String touristPackageName;
+
+    @Column(name = "cancelled", nullable = false)
+    private Boolean cancelled = false;
+
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
 
     @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference

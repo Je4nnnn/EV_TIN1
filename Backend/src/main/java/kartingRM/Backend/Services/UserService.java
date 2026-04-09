@@ -1,6 +1,8 @@
 package kartingRM.Backend.Services;
 
 import kartingRM.Backend.Entities.UserEntity;
+import kartingRM.Backend.Exceptions.BusinessException;
+import kartingRM.Backend.Exceptions.ResourceNotFoundException;
 import kartingRM.Backend.Repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -46,7 +48,7 @@ public class UserService {
 
     private UserEntity obtenerUsuarioNormalizado(Long userId) {
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + userId));
 
         if (normalizarUsuario(user)) {
             user = userRepository.save(user);
@@ -88,6 +90,10 @@ public class UserService {
     }
 
     public Optional<UserEntity> findUserByRut(String rut) {
+        if (rut == null || rut.isBlank()) {
+            return Optional.empty();
+        }
+
         Optional<UserEntity> optionalUser = userRepository.findByRut(rut);
 
         if (optionalUser.isPresent()) {
@@ -103,7 +109,7 @@ public class UserService {
 
     public UserEntity incrementVisits(String rut) {
         UserEntity user = userRepository.findByRut(rut)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con RUT: " + rut));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con RUT: " + rut));
 
         if (normalizarUsuario(user)) {
             user = userRepository.save(user);
@@ -117,18 +123,17 @@ public class UserService {
     }
 
     public UserEntity saveUser(UserEntity user) {
-        if (user.getNumberVisits() == null || user.getNumberVisits() < 0) {
-            user.setNumberVisits(0);
-        }
-
-        if (user.getCategory_frecuency() == null || user.getCategory_frecuency().isBlank()) {
-            user.setCategory_frecuency(calcularCategoriaPorVisitas(user.getNumberVisits()));
-        }
-
+        validateUser(user, true);
+        user.setRut(user.getRut().trim().toUpperCase());
+        normalizeUserForPersistence(user);
         return userRepository.save(user);
     }
 
     public UserEntity getUserByRut(String rut) {
+        if (rut == null || rut.isBlank()) {
+            return null;
+        }
+
         Optional<UserEntity> optionalUser = userRepository.findByRut(rut);
 
         if (optionalUser.isPresent()) {
@@ -171,22 +176,58 @@ public class UserService {
         UserEntity existing = findUserById(id);
 
         if (updatedUser.getName() != null) {
-            existing.setName(updatedUser.getName());
+            existing.setName(updatedUser.getName().trim());
         }
         if (updatedUser.getEmail() != null) {
-            existing.setEmail(updatedUser.getEmail());
+            existing.setEmail(updatedUser.getEmail().trim());
         }
         if (updatedUser.getPhoneNumber() != null) {
-            existing.setPhoneNumber(updatedUser.getPhoneNumber());
+            existing.setPhoneNumber(updatedUser.getPhoneNumber().trim());
         }
         if (updatedUser.getDateBirthday() != null) {
             existing.setDateBirthday(updatedUser.getDateBirthday());
         }
 
-        if (normalizarUsuario(existing)) {
-            return userRepository.save(existing);
+        validateUser(existing, false);
+        normalizeUserForPersistence(existing);
+        return userRepository.save(existing);
+    }
+
+    private void validateUser(UserEntity user, boolean validateRut) {
+        if (user == null) {
+            throw new BusinessException("Debe enviar un usuario valido.");
         }
 
-        return userRepository.save(existing);
+        if (validateRut && (user.getRut() == null || user.getRut().isBlank())) {
+            throw new BusinessException("El rut es obligatorio.");
+        }
+
+        if (user.getName() == null || user.getName().isBlank()) {
+            throw new BusinessException("El nombre del usuario es obligatorio.");
+        }
+
+        if (user.getEmail() != null && !user.getEmail().isBlank() && !user.getEmail().contains("@")) {
+            throw new BusinessException("El correo del usuario no tiene un formato valido.");
+        }
+    }
+
+    private void normalizeUserForPersistence(UserEntity user) {
+        if (user.getNumberVisits() == null || user.getNumberVisits() < 0) {
+            user.setNumberVisits(0);
+        }
+
+        if (user.getCategory_frecuency() == null || user.getCategory_frecuency().isBlank()) {
+            user.setCategory_frecuency(calcularCategoriaPorVisitas(user.getNumberVisits()));
+        }
+
+        user.setName(user.getName().trim());
+
+        if (user.getEmail() != null) {
+            user.setEmail(user.getEmail().trim());
+        }
+
+        if (user.getPhoneNumber() != null) {
+            user.setPhoneNumber(user.getPhoneNumber().trim());
+        }
     }
 }

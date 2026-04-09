@@ -5,13 +5,49 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5b02bcf5-f91a-45ca-98ab-099f07d27ac8" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/run_antigravity.ps1" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/ReservationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/ReservationController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/RoomController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/RoomController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/UserController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Entities/ReservationEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Entities/ReservationEntity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Repositories/ReservationRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Repositories/ReservationRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Repositories/RoomRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Repositories/RoomRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Repositories/UserRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Repositories/UserRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/ReservationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/ReservationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/RoomService.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/RoomService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/UserService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Backend/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/.env" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/.env" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/App.css" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/App.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/App.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/components/CalendarHome.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/components/CalendarHome.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/components/NavBar/Navbar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/components/NavBar/Navbar.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/components/Rack.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/components/Rack.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/components/ReportTable.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/components/ReportTable.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/components/RoomsTable.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/components/RoomsTable.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/components/TablePrices.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/components/TablePrices.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/index.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/main.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/main.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/services/CalendarHomeService.js" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/services/CalendarHomeService.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/services/ReportsService.js" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/services/ReportsService.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/services/ReservationService.js" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/services/ReservationService.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/services/RoomsService.js" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/services/RoomsService.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/views/Forms/Formulario.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/views/Forms/Formulario.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/views/Home/Home.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/views/Home/Home.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/views/Rack/Rack.css" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/views/Rack/Rack.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/views/Rack/Rack.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/views/Rack/Rack.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/views/Reports/Reports.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/views/Reports/Reports.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/views/Rooms/Rooms.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/views/Rooms/Rooms.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="85" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -63,6 +99,14 @@
 }</component>
   <component name="RunManager">
     <configuration name="BackendApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <envs>
+        <env name="DB_HOST" value="localhost" />
+        <env name="DB_PORT" value="5432" />
+        <env name="DB_NAME" value="hotelrm" />
+        <env name="DB_USER" value="hotelrm_app" />
+        <env name="DB_PASSWORD" value="CambiaEstaClaveSegura_2026!" />
+        <env name="SERVER_PORT" value="8091" />
+      </envs>
       <module name="tingeso1" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="kartingRM.Backend.BackendApplication" />
       <method v="2">
@@ -87,6 +131,7 @@
       <updated>1775449138905</updated>
       <workItem from="1775449141458" duration="3763000" />
       <workItem from="1775686922969" duration="2915000" />
+      <workItem from="1775693007337" duration="8418000" />
     </task>
     <servers />
   </component>

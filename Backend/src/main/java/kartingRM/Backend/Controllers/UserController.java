@@ -3,85 +3,75 @@ package kartingRM.Backend.Controllers;
 import kartingRM.Backend.Entities.UserEntity;
 import kartingRM.Backend.Services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/v1/users")
 @CrossOrigin("*")
 public class UserController {
+
     @Autowired
     private UserService userService;
 
-    @GetMapping("/")
-    public List<UserEntity> getAllUsers() {
-        return userService.getAllUsers();
+    @GetMapping
+    public ResponseEntity<List<UserEntity>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @GetMapping("/{id}")
-    public UserEntity getUserById(@PathVariable("id") long id) {
-        return userService.findUserById(id);
+    public ResponseEntity<UserEntity> getUserById(@PathVariable("id") long id) {
+        return ResponseEntity.ok(userService.findUserById(id));
     }
 
-    @PostMapping("/")
+    @PostMapping
     public ResponseEntity<UserEntity> addUser(@RequestBody UserEntity user) {
-        if (user.getRut() == null || user.getRut().isEmpty()) {
-            return ResponseEntity.badRequest().body(null);
-        }
-        if (user.getName() == null || user.getName().isEmpty()) {
-            return ResponseEntity.badRequest().body(null);
-        }
-
-        // Verificar si el usuario ya existe por RUT
         UserEntity existing = userService.getUserByRut(user.getRut());
         if (existing != null) {
             return ResponseEntity.ok(existing);
         }
-
-        UserEntity savedUser = userService.saveUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
+        return ResponseEntity.ok(userService.saveUser(user));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<UserEntity> updateUser(@PathVariable("id") Long id, @RequestBody UserEntity user) {
-        try {
-            UserEntity updatedUser = userService.updateUser(id, user);
-            return ResponseEntity.ok(updatedUser);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
+        return ResponseEntity.ok(userService.updateUser(id, user));
     }
 
     @PutMapping("/{id}/update-category")
-    public UserEntity updateCategoryFrequency(@PathVariable("id") Long userId) {
-        return userService.updateCategoryFrequency(userId);
+    public ResponseEntity<UserEntity> updateCategoryFrequency(@PathVariable("id") Long userId) {
+        return ResponseEntity.ok(userService.updateCategoryFrequency(userId));
     }
 
     @PutMapping("/{id}/update-visits")
-    public UserEntity updateNumberVisits(@PathVariable("id") Long userId, @RequestParam("visits") int newVisits) {
-        return userService.updateNumberVisits(userId, newVisits);
+    public ResponseEntity<UserEntity> updateNumberVisits(
+            @PathVariable("id") Long userId,
+            @RequestParam("visits") int newVisits
+    ) {
+        return ResponseEntity.ok(userService.updateNumberVisits(userId, newVisits));
     }
 
     @PutMapping("/{id}/increment-visits")
-    public ResponseEntity<?> incrementVisitsAndUpdateCategory(@PathVariable("id") Long userId) {
-        try {
-            UserEntity updatedUser = userService.incrementVisitsAndUpdateCategory(userId);
-            return ResponseEntity.ok(updatedUser);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+    public ResponseEntity<UserEntity> incrementVisitsAndUpdateCategory(@PathVariable("id") Long userId) {
+        return ResponseEntity.ok(userService.incrementVisitsAndUpdateCategory(userId));
     }
 
     @GetMapping("/findByRut/{rut:.+}")
     public ResponseEntity<UserEntity> getUserByRut(@PathVariable String rut) {
         UserEntity user = userService.getUserByRut(rut);
-        if (user != null) {
-            return ResponseEntity.ok(user);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
         }
+        return ResponseEntity.ok(user);
     }
 }

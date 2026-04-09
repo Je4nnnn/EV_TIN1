@@ -1,40 +1,72 @@
-import React from 'react';
+import {
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material'
 
-const ReportTable = ({ reporte }) => {
-    const categorias = Object.keys(reporte).filter((key) => key !== 'TOTAL');
-    const meses = Object.keys(reporte['TOTAL']).filter((key) => key !== 'TOTAL');
+const currencyFormatter = new Intl.NumberFormat('es-CL', {
+  style: 'currency',
+  currency: 'CLP',
+  maximumFractionDigits: 0,
+})
 
-    return (
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>Categoría</th>
-                    {meses.map((mes) => (
-                        <th key={mes}>{mes}</th>
-                    ))}
-                    <th>Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                {categorias.map((categoria) => (
-                    <tr key={categoria}>
-                        <td>{categoria}</td>
-                        {meses.map((mes) => (
-                            <td key={mes}>{reporte[categoria][mes].toLocaleString('es-CL')}</td>
-                        ))}
-                        <td>{reporte[categoria]['TOTAL'].toLocaleString('es-CL')}</td>
-                    </tr>
-                ))}
-                <tr>
-                    <td><strong>Total General</strong></td>
-                    {meses.map((mes) => (
-                        <td key={mes}><strong>{reporte['TOTAL'][mes].toLocaleString('es-CL')}</strong></td>
-                    ))}
-                    <td><strong>{reporte['TOTAL']['TOTAL'].toLocaleString('es-CL')}</strong></td>
-                </tr>
-            </tbody>
-        </table>
-    );
-};
+const ReportTable = ({ reporte, title }) => {
+  const categorias = Object.keys(reporte).filter((key) => key !== 'TOTAL')
+  const meses = Object.keys(reporte.TOTAL || {}).filter((key) => key !== 'TOTAL')
 
-export default ReportTable;
+  return (
+    <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid rgba(15, 23, 42, 0.08)' }}>
+      {title ? (
+        <Typography variant="h6" sx={{ px: 2, pt: 2, fontWeight: 700 }}>
+          {title}
+        </Typography>
+      ) : null}
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Categoria</TableCell>
+            {meses.map((mes) => (
+              <TableCell key={mes} align="right">
+                {mes}
+              </TableCell>
+            ))}
+            <TableCell align="right">Total</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {categorias.map((categoria) => (
+            <TableRow key={categoria} hover>
+              <TableCell sx={{ fontWeight: 600 }}>{categoria}</TableCell>
+              {meses.map((mes) => (
+                <TableCell key={mes} align="right">
+                  {currencyFormatter.format(reporte[categoria][mes] || 0)}
+                </TableCell>
+              ))}
+              <TableCell align="right" sx={{ fontWeight: 700 }}>
+                {currencyFormatter.format(reporte[categoria].TOTAL || 0)}
+              </TableCell>
+            </TableRow>
+          ))}
+          <TableRow>
+            <TableCell sx={{ fontWeight: 800 }}>Total general</TableCell>
+            {meses.map((mes) => (
+              <TableCell key={mes} align="right" sx={{ fontWeight: 800 }}>
+                {currencyFormatter.format(reporte.TOTAL?.[mes] || 0)}
+              </TableCell>
+            ))}
+            <TableCell align="right" sx={{ fontWeight: 800 }}>
+              {currencyFormatter.format(reporte.TOTAL?.TOTAL || 0)}
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </TableContainer>
+  )
+}
+
+export default ReportTable

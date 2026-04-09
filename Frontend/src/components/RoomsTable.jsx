@@ -1,65 +1,123 @@
-import React, { useState, useEffect } from 'react';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
-import { getRooms } from '../services/RoomsService';
+import { useEffect, useState } from 'react'
+import dayjs from 'dayjs'
+import {
+  Alert,
+  Chip,
+  CircularProgress,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+} from '@mui/material'
+import { getRoomOverview } from '../services/RoomsService'
+
+const occupancyConfig = {
+  AVAILABLE: { label: 'Disponible', color: 'success' },
+  RESERVED: { label: 'Reservada', color: 'warning' },
+  OCCUPIED: { label: 'Ocupada', color: 'error' },
+}
 
 export default function RoomsTable() {
-  const [rooms, setRooms] = useState([]);
+  const [rooms, setRooms] = useState([])
+  const [referenceDate, setReferenceDate] = useState(dayjs().format('YYYY-MM-DD'))
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     const fetchRooms = async () => {
-      try {
-        const response = await getRooms();
-        setRooms(Array.isArray(response) ? response : response.data || []);
-      } catch (error) {
-        console.error('Error fetching rooms:', error);
-        setRooms([]); 
-      }
-    };
+      setLoading(true)
+      setError('')
 
-    fetchRooms();
-  }, []);
+      try {
+        const response = await getRoomOverview(referenceDate)
+        setRooms(response)
+      } catch (fetchError) {
+        setError(fetchError.message)
+        setRooms([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchRooms()
+  }, [referenceDate])
+
+  if (loading) {
+    return <CircularProgress />
+  }
+
+  if (error) {
+    return <Alert severity="error">{error}</Alert>
+  }
 
   return (
-    <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} aria-label="rooms table">
-        <TableHead>
-          <TableRow>
-            <TableCell>Room ID</TableCell>
-            <TableCell align="right">Room Number</TableCell>
-            <TableCell align="right">Type</TableCell>
-            <TableCell align="right">Status</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {Array.isArray(rooms) && rooms.length > 0 ? (
-            rooms.map((room) => (
-              <TableRow
-                key={room.id}
-                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-              >
-                <TableCell component="th" scope="row">
-                  {room.id}
-                </TableCell>
-                <TableCell align="right">{room.roomNumber}</TableCell>
-                <TableCell align="right">{room.type}</TableCell>
-                <TableCell align="right">{room.status}</TableCell>
-              </TableRow>
-            ))
-          ) : (
+    <Stack spacing={2}>
+      <TextField
+        type="date"
+        label="Fecha de referencia"
+        value={referenceDate}
+        onChange={(event) => setReferenceDate(event.target.value)}
+        InputLabelProps={{ shrink: true }}
+        sx={{ maxWidth: 260 }}
+      />
+      <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid rgba(15, 23, 42, 0.08)' }}>
+        <Typography variant="h6" sx={{ px: 2, pt: 2, fontWeight: 700 }}>
+          Estado real de habitaciones
+        </Typography>
+        <Table>
+          <TableHead>
             <TableRow>
-              <TableCell colSpan={4} align="center">
-                No hay habitaciones
-              </TableCell>
+              <TableCell>Numero</TableCell>
+              <TableCell>Tipo</TableCell>
+              <TableCell>Estado operativo</TableCell>
+              <TableCell>Ocupacion</TableCell>
+              <TableCell>Reserva asociada</TableCell>
+              <TableCell>Rango</TableCell>
             </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
+          </TableHead>
+          <TableBody>
+            {rooms.length > 0 ? (
+              rooms.map((room) => {
+                const occupancy = occupancyConfig[room.occupancyStatus] || {
+                  label: room.occupancyStatus,
+                  color: 'default',
+                }
+
+                return (
+                  <TableRow key={room.id} hover>
+                    <TableCell>{room.roomNumber}</TableCell>
+                    <TableCell>{room.type}</TableCell>
+                    <TableCell>
+                      <Chip label={room.operationalStatus} variant="outlined" />
+                    </TableCell>
+                    <TableCell>
+                      <Chip label={occupancy.label} color={occupancy.color} variant="outlined" />
+                    </TableCell>
+                    <TableCell>{room.reservationCode || '-'}</TableCell>
+                    <TableCell>
+                      {room.reservedFrom && room.reservedUntil
+                        ? `${room.reservedFrom} -> ${room.reservedUntil}`
+                        : '-'}
+                    </TableCell>
+                  </TableRow>
+                )
+              })
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  No hay habitaciones registradas.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Stack>
+  )
 }

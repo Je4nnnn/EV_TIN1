@@ -1,19 +1,25 @@
 package kartingRM.Backend.Controllers;
 
-import kartingRM.Backend.Entities.ReservationDetailsEntity;
+import kartingRM.Backend.DTOs.ApiMessageResponse;
 import kartingRM.Backend.Entities.ReservationEntity;
 import kartingRM.Backend.Services.ReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/reservations")
@@ -23,104 +29,57 @@ public class ReservationController {
     @Autowired
     private ReservationService reservationService;
 
-    @PostMapping("/confirmar")
-    public ResponseEntity<?> confirmarReserva(@RequestBody ReservationEntity reserva) {
-        if (reserva.getDetails() == null || reserva.getDetails().isEmpty()) {
-            return ResponseEntity.badRequest().body("La reserva debe incluir al menos un detalle.");
-        }
-
-        for (ReservationDetailsEntity detalle : reserva.getDetails()) {
-            if (detalle.getUserId() == null) {
-                return ResponseEntity.badRequest().body("Cada detalle debe incluir un userId válido.");
-            }
-        }
-
-        if (reserva.getCheckInDate() == null) {
-            return ResponseEntity.badRequest().body("La reserva debe incluir una fecha de check-in.");
-        }
-
-        if (reserva.getCheckOutDate() == null) {
-            return ResponseEntity.badRequest().body("La reserva debe incluir una fecha de check-out.");
-        }
-
-        if (reserva.getCheckOutDate().isBefore(reserva.getCheckInDate())) {
-            return ResponseEntity.badRequest().body("La fecha de check-out no puede ser anterior a la de check-in.");
-        }
-
-        if (reserva.getStayType() == null || reserva.getStayType().isBlank()) {
-            return ResponseEntity.badRequest().body("Debe especificar el tipo de estancia (Mañana, Noche o Completo).");
-        }
-
-        if (reserva.getNumberOfGuests() == null || reserva.getNumberOfGuests() < 1) {
-            reserva.setNumberOfGuests(reserva.getDetails().size());
-        }
-
-        if (reserva.getNumberOfGuests() > 15) {
-            return ResponseEntity.badRequest().body("La cantidad máxima de huéspedes por reserva es 15.");
-        }
-
-        if (reserva.getCliente() == null || reserva.getCliente().getId() == null) {
-            Long primerUserId = reserva.getDetails().get(0).getUserId();
-            if (primerUserId == null) {
-                return ResponseEntity.badRequest().body("No se pudo determinar el cliente principal de la reserva.");
-            }
-        }
-
-        try {
-            ReservationEntity savedReserva = reservationService.saveReservation(reserva);
-            return ResponseEntity.ok(savedReserva);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error al confirmar la reserva: " + e.getMessage());
-        }
-    }
-
-    @GetMapping("/")
-    public List<Map<String, String>> getAllReservations() {
-        return reservationService.getAllReservations().stream().map(reserve -> {
-            Map<String, String> formattedReserve = new HashMap<>();
-            formattedReserve.put("checkInDate", reserve.getCheckInDate() != null ? reserve.getCheckInDate().toString() : "");
-            formattedReserve.put("checkOutDate", reserve.getCheckOutDate() != null ? reserve.getCheckOutDate().toString() : "");
-            formattedReserve.put("stayType", reserve.getStayType() != null ? reserve.getStayType() : "");
-            formattedReserve.put("roomType", reserve.getRoomType() != null ? reserve.getRoomType() : "");
-            formattedReserve.put("reservationCode", reserve.getReservationCode() != null ? reserve.getReservationCode() : "");
-            return formattedReserve;
-        }).collect(Collectors.toList());
+    @GetMapping
+    public ResponseEntity<List<ReservationEntity>> getAllReservations() {
+        return ResponseEntity.ok(reservationService.getAllReservations());
     }
 
     @GetMapping("/{id}")
-    public ReservationEntity getReservationById(@PathVariable("id") Long id) {
-        return reservationService.getReservationById(id);
+    public ResponseEntity<ReservationEntity> getReservationById(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(reservationService.getReservationById(id));
     }
 
-    @PostMapping("/")
-    public ReservationEntity addReservation(@RequestBody ReservationEntity reserve) {
-        return reservationService.saveReservation(reserve);
+    @PostMapping
+    public ResponseEntity<ReservationEntity> addReservation(@RequestBody ReservationEntity reserve) {
+        return ResponseEntity.ok(reservationService.saveReservation(reserve));
+    }
+
+    @PostMapping("/confirmar")
+    public ResponseEntity<ReservationEntity> confirmarReserva(@RequestBody ReservationEntity reserve) {
+        return ResponseEntity.ok(reservationService.saveReservation(reserve));
     }
 
     @PutMapping("/{id}")
-    public ReservationEntity updateReservation(@PathVariable("id") Long id, @RequestBody ReservationEntity reserve) {
-        return reservationService.updateReservation(id, reserve);
+    public ResponseEntity<ReservationEntity> updateReservation(
+            @PathVariable("id") Long id,
+            @RequestBody ReservationEntity reserve
+    ) {
+        return ResponseEntity.ok(reservationService.updateReservation(id, reserve));
     }
 
     @DeleteMapping("/{id}")
-    public void deleteReservation(@PathVariable("id") Long id) {
+    public ResponseEntity<ApiMessageResponse> deleteReservation(@PathVariable("id") Long id) {
         reservationService.deleteReservation(id);
+        return ResponseEntity.ok(new ApiMessageResponse("Reserva eliminada correctamente."));
     }
 
-    @GetMapping("/reporte/tipo-habitacion")
+    @GetMapping("/reports/room-type")
     public ResponseEntity<Map<String, Map<String, Double>>> getReportePorTipoHabitacion(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
-        Map<String, Map<String, Double>> reporte = reservationService.getReporteIngresosPorVueltasOTiempo(fechaInicio, fechaFin);
-        return ResponseEntity.ok(reporte);
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+    ) {
+        return ResponseEntity.ok(
+                reservationService.getReporteIngresosPorVueltasOTiempo(fechaInicio, fechaFin)
+        );
     }
 
-    @GetMapping("/reporte/cantidad-personas")
+    @GetMapping("/reports/guest-count")
     public ResponseEntity<Map<String, Map<String, Double>>> getReportePorCantidadPersonas(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
-        Map<String, Map<String, Double>> reporte = reservationService.getReporteIngresosPorCantidadDePersonas(fechaInicio, fechaFin);
-        return ResponseEntity.ok(reporte);
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+    ) {
+        return ResponseEntity.ok(
+                reservationService.getReporteIngresosPorCantidadDePersonas(fechaInicio, fechaFin)
+        );
     }
 }
