@@ -1,12 +1,12 @@
 package kartingRM.Backend.Services;
 
-import jakarta.transaction.Transactional;
 import kartingRM.Backend.Entities.TouristPackageEntity;
 import kartingRM.Backend.Exceptions.BusinessException;
 import kartingRM.Backend.Exceptions.ResourceNotFoundException;
 import kartingRM.Backend.Repositories.TouristPackageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -17,17 +17,26 @@ public class TouristPackageService {
     @Autowired
     private TouristPackageRepository touristPackageRepository;
 
+    @Transactional(readOnly = true)
     public List<TouristPackageEntity> getAllPackages() {
-        return touristPackageRepository.findAll();
+        List<TouristPackageEntity> packages = touristPackageRepository.findAll();
+        packages.forEach(this::normalizePackageForRead);
+        return packages;
     }
 
+    @Transactional(readOnly = true)
     public List<TouristPackageEntity> getAvailablePackages() {
-        return touristPackageRepository.findByAvailableTrueOrderByPackageNameAsc();
+        List<TouristPackageEntity> packages = touristPackageRepository.findByAvailableTrueOrderByPackageNameAsc();
+        packages.forEach(this::normalizePackageForRead);
+        return packages;
     }
 
+    @Transactional(readOnly = true)
     public TouristPackageEntity getPackageById(Long id) {
-        return touristPackageRepository.findById(id)
+        TouristPackageEntity touristPackage = touristPackageRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Paquete turistico no encontrado con ID: " + id));
+        normalizePackageForRead(touristPackage);
+        return touristPackage;
     }
 
     @Transactional
@@ -198,5 +207,37 @@ public class TouristPackageService {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private void normalizePackageForRead(TouristPackageEntity touristPackage) {
+        if (touristPackage == null) {
+            return;
+        }
+
+        if (touristPackage.getDestinations() == null) {
+            touristPackage.setDestinations(new java.util.ArrayList<>());
+        }
+        if (touristPackage.getActivities() == null) {
+            touristPackage.setActivities(new java.util.ArrayList<>());
+        }
+        if (touristPackage.getExtraServices() == null) {
+            touristPackage.setExtraServices(new java.util.ArrayList<>());
+        }
+        if (touristPackage.getAvailable() == null) {
+            touristPackage.setAvailable(Boolean.FALSE);
+        }
+        if (touristPackage.getTransferIncluded() == null) {
+            touristPackage.setTransferIncluded(Boolean.FALSE);
+        }
+        if (touristPackage.getAutomobileServiceIncluded() == null) {
+            touristPackage.setAutomobileServiceIncluded(Boolean.FALSE);
+        }
+        if (touristPackage.getStatus() == null || touristPackage.getStatus().isBlank()) {
+            touristPackage.setStatus(Boolean.TRUE.equals(touristPackage.getAvailable()) ? "AVAILABLE" : "UNAVAILABLE");
+        }
+
+        touristPackage.getDestinations().size();
+        touristPackage.getActivities().size();
+        touristPackage.getExtraServices().size();
     }
 }

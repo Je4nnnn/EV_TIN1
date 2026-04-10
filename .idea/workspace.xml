@@ -5,41 +5,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5b02bcf5-f91a-45ca-98ab-099f07d27ac8" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/run_antigravity.ps1" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/ReservationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/ReservationController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/RoomController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/RoomController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/UserController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Entities/ReservationEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Entities/ReservationEntity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Exceptions/GlobalExceptionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Exceptions/GlobalExceptionHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Repositories/ReservationRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Repositories/ReservationRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Repositories/RoomRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Repositories/RoomRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Repositories/UserRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Repositories/UserRepository.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/ReservationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/ReservationService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/RoomService.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/RoomService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/UserService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/TouristPackageService.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/TouristPackageService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Backend/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/.env" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/App.css" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/App.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/App.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/components/CalendarHome.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/components/CalendarHome.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/components/NavBar/Navbar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/components/NavBar/Navbar.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/components/Rack.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/components/Rack.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/components/ReportTable.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/components/ReportTable.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/components/RoomsTable.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/components/RoomsTable.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/components/TablePrices.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/components/TablePrices.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/index.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/main.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/main.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/services/CalendarHomeService.js" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/services/CalendarHomeService.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/services/ReportsService.js" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/services/ReportsService.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/services/ReservationService.js" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/services/ReservationService.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/services/RoomsService.js" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/services/RoomsService.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/views/Forms/Formulario.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/views/Forms/Formulario.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/services/TouristPackageService.js" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/services/TouristPackageService.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Frontend/src/views/Home/Home.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/views/Home/Home.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/views/Rack/Rack.css" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/views/Rack/Rack.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/views/Rack/Rack.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/views/Rack/Rack.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/views/Reports/Reports.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/views/Reports/Reports.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/views/Rooms/Rooms.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/views/Rooms/Rooms.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/src/views/TouristPackages/TouristPackages.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/views/TouristPackages/TouristPackages.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -47,7 +24,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="85" />
+    <option name="cachedIndexableFilesCount" value="100" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -72,31 +49,32 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
-    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
-    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
-    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;Spring Boot.BackendApplication.executor&quot;: &quot;Run&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Spring Boot.BackendApplication.executor": "Run",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "main",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager">
     <configuration name="BackendApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <envs>
@@ -107,7 +85,7 @@
         <env name="DB_PASSWORD" value="CambiaEstaClaveSegura_2026!" />
         <env name="SERVER_PORT" value="8091" />
       </envs>
-      <module name="tingeso1" />
+      <module name="Backend" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="kartingRM.Backend.BackendApplication" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -132,6 +110,7 @@
       <workItem from="1775449141458" duration="3763000" />
       <workItem from="1775686922969" duration="2915000" />
       <workItem from="1775693007337" duration="8418000" />
+      <workItem from="1775757734807" duration="5831000" />
     </task>
     <servers />
   </component>

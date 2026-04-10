@@ -66,7 +66,7 @@ public class ReservationEntity {
     private String touristPackageName;
 
     @Column(name = "cancelled", nullable = false)
-    private Boolean cancelled = false;
+    private Boolean cancelled = Boolean.FALSE;
 
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
@@ -76,9 +76,13 @@ public class ReservationEntity {
     private List<ReservationDetailsEntity> details = new ArrayList<>();
 
     @PrePersist
-    private void generateReservationCode() {
+    private void prepareDefaults() {
         if (this.reservationCode == null || this.reservationCode.isEmpty()) {
             this.reservationCode = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        }
+
+        if (this.cancelled == null) {
+            this.cancelled = Boolean.FALSE;
         }
     }
 

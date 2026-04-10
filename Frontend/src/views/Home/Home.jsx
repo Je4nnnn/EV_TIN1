@@ -164,7 +164,7 @@ const Home = () => {
     }
 
     loadAvailableRooms()
-  }, [checkInDate, checkOutDate, roomType, stayType, selectedRoomId])
+  }, [checkInDate, checkOutDate, roomType, stayType])
 
   const handleCheckOutChange = (event) => {
     const newDate = dayjs(event.target.value)

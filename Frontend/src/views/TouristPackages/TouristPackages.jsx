@@ -57,6 +57,8 @@ const TouristPackages = () => {
   const [formData, setFormData] = useState(initialForm)
   const [editingId, setEditingId] = useState(null)
 
+  const getSafeList = (value) => (Array.isArray(value) ? value : [])
+
   const loadPackages = async () => {
     setLoading(true)
     setError('')
@@ -86,9 +88,9 @@ const TouristPackages = () => {
     setFormData({
       packageName: touristPackage.packageName,
       description: touristPackage.description,
-      destinations: touristPackage.destinations.join(', '),
-      activities: touristPackage.activities.join(', '),
-      extraServices: touristPackage.extraServices.join(', '),
+      destinations: getSafeList(touristPackage.destinations).join(', '),
+      activities: getSafeList(touristPackage.activities).join(', '),
+      extraServices: getSafeList(touristPackage.extraServices).join(', '),
       daysCount: touristPackage.daysCount,
       nightsCount: touristPackage.nightsCount,
       roomType: touristPackage.roomType,
@@ -213,13 +215,13 @@ const TouristPackages = () => {
                     {touristPackage.description}
                   </Typography>
                   <Typography variant="body2">
-                    Destinos: {touristPackage.destinations.join(', ')}
+                    Destinos: {getSafeList(touristPackage.destinations).join(', ') || 'Sin destinos configurados'}
                   </Typography>
                   <Typography variant="body2">
-                    Actividades: {touristPackage.activities.join(', ') || 'Sin actividades adicionales'}
+                    Actividades: {getSafeList(touristPackage.activities).join(', ') || 'Sin actividades adicionales'}
                   </Typography>
                   <Typography variant="body2">
-                    Extras: {touristPackage.extraServices.join(', ') || 'Sin extras'}
+                    Extras: {getSafeList(touristPackage.extraServices).join(', ') || 'Sin extras'}
                   </Typography>
                   <Typography variant="body2">
                     Duracion: {touristPackage.daysCount} dias / {touristPackage.nightsCount} noches

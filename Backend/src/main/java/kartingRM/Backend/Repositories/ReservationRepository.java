@@ -10,5 +10,6 @@ import java.util.List;
 public interface ReservationRepository extends JpaRepository<ReservationEntity, Long> {
     List<ReservationEntity> findByCancelledFalse();
     List<ReservationEntity> findByRoomIdAndCancelledFalse(Long roomId);
+    List<ReservationEntity> findByRoomIdInAndCancelledFalse(List<Long> roomIds);
     List<ReservationEntity> findByClienteRutIgnoreCaseAndCancelledFalse(String rut);
 }

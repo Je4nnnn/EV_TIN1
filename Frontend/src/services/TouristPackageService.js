@@ -2,12 +2,23 @@ import { apiClient, getApiErrorMessage } from './api'
 
 const API_URL = '/api/v1/tourist-packages'
 
+const normalizePackage = (touristPackage) => ({
+  ...touristPackage,
+  destinations: Array.isArray(touristPackage?.destinations) ? touristPackage.destinations : [],
+  activities: Array.isArray(touristPackage?.activities) ? touristPackage.activities : [],
+  extraServices: Array.isArray(touristPackage?.extraServices) ? touristPackage.extraServices : [],
+  available: Boolean(touristPackage?.available),
+  transferIncluded: Boolean(touristPackage?.transferIncluded),
+  automobileServiceIncluded: Boolean(touristPackage?.automobileServiceIncluded),
+  status: touristPackage?.status || 'UNAVAILABLE',
+})
+
 export const getTouristPackages = async (availableOnly = false) => {
   try {
     const response = await apiClient.get(API_URL, {
       params: { availableOnly },
     })
-    return Array.isArray(response.data) ? response.data : []
+    return Array.isArray(response.data) ? response.data.map(normalizePackage) : []
   } catch (error) {
     throw new Error(getApiErrorMessage(error, 'No fue posible obtener los paquetes turisticos.'))
   }

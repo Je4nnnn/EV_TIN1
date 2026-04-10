@@ -1,6 +1,5 @@
 package kartingRM.Backend.Services;
 
-import jakarta.transaction.Transactional;
 import kartingRM.Backend.Entities.ReservationDetailsEntity;
 import kartingRM.Backend.Entities.ReservationEntity;
 import kartingRM.Backend.Entities.TouristPackageEntity;
@@ -11,6 +10,7 @@ import kartingRM.Backend.Repositories.ReservationRepository;
 import kartingRM.Backend.Repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.Normalizer;
 import java.time.LocalDate;
@@ -45,13 +45,19 @@ public class ReservationService {
     @Autowired
     private RoomService roomService;
 
+    @Transactional(readOnly = true)
     public List<ReservationEntity> getAllReservations() {
-        return reservationRepository.findByCancelledFalse();
+        List<ReservationEntity> reservations = reservationRepository.findByCancelledFalse();
+        reservations.forEach(this::initializeReservation);
+        return reservations;
     }
 
+    @Transactional(readOnly = true)
     public ReservationEntity getReservationById(Long id) {
-        return reservationRepository.findById(id)
+        ReservationEntity reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada con ID: " + id));
+        initializeReservation(reservation);
+        return reservation;
     }
 
     @Transactional
@@ -151,6 +157,7 @@ public class ReservationService {
         return 0.0;
     }
 
+    @Transactional(readOnly = true)
     public Map<String, Map<String, Double>> getReporteIngresosPorVueltasOTiempo(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Map<String, Double>> reporte = new LinkedHashMap<>();
         List<String> meses = getMeses();
@@ -174,6 +181,7 @@ public class ReservationService {
         return reporte;
     }
 
+    @Transactional(readOnly = true)
     public Map<String, Map<String, Double>> getReporteIngresosPorCantidadDePersonas(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Map<String, Double>> reporte = new LinkedHashMap<>();
         List<String> meses = getMeses();
@@ -272,6 +280,10 @@ public class ReservationService {
     }
 
     private void prepareReservationForPersistence(ReservationEntity reserve) {
+        if (reserve.getCancelled() == null) {
+            reserve.setCancelled(Boolean.FALSE);
+        }
+
         reserve.setNumberOfGuests(resolveGuestCount(reserve));
         reserve.setStayType(reserve.getStayType().trim());
         reserve.setRoomType(reserve.getRoomType().trim());
@@ -482,10 +494,28 @@ public class ReservationService {
         }
 
         return reservationRepository.findByCancelledFalse().stream()
+                .peek(this::initializeReservation)
                 .filter(reserva -> reserva.getCheckInDate() != null)
                 .filter(reserva -> !reserva.getCheckInDate().isBefore(fechaInicio)
                         && !reserva.getCheckInDate().isAfter(fechaFin))
                 .collect(Collectors.toList());
+    }
+
+    private void initializeReservation(ReservationEntity reservation) {
+        if (reservation == null) {
+            return;
+        }
+
+        if (reservation.getCliente() != null) {
+            reservation.getCliente().getId();
+        }
+
+        if (reservation.getDetails() != null) {
+            reservation.getDetails().forEach(detail -> {
+                detail.getId();
+                detail.getGuestName();
+            });
+        }
     }
 
     private List<String> getMeses() {

@@ -11,14 +11,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.Normalizer;
+import java.util.Collections;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class RoomService {
@@ -37,10 +41,12 @@ public class RoomService {
 
     public List<RoomAvailabilityResponse> getRoomAvailabilityOverview(LocalDate referenceDate) {
         LocalDate targetDate = referenceDate != null ? referenceDate : LocalDate.now();
+        List<RoomEntity> rooms = roomRepository.findAll();
+        Map<Long, List<ReservationEntity>> reservationsByRoomId = getReservationsByRoomId(rooms);
 
-        return roomRepository.findAll().stream()
+        return rooms.stream()
                 .sorted(Comparator.comparing(RoomEntity::getRoomNumber, String.CASE_INSENSITIVE_ORDER))
-                .map(room -> buildRoomAvailability(room, targetDate))
+                .map(room -> buildRoomAvailability(room, targetDate, reservationsByRoomId.getOrDefault(room.getId(), Collections.emptyList())))
                 .toList();
     }
 
@@ -84,13 +90,14 @@ public class RoomService {
 
         List<RoomEntity> roomsByType = roomRepository.findByTypeIgnoreCaseOrderByRoomNumberAsc(roomType);
         List<RoomEntity> availableRooms = new ArrayList<>();
+        Map<Long, List<ReservationEntity>> reservationsByRoomId = getReservationsByRoomId(roomsByType);
 
         for (RoomEntity room : roomsByType) {
             if (!isRoomOperational(room)) {
                 continue;
             }
 
-            boolean overlaps = reservationRepository.findByRoomIdAndCancelledFalse(room.getId()).stream()
+            boolean overlaps = reservationsByRoomId.getOrDefault(room.getId(), Collections.emptyList()).stream()
                     .anyMatch(reservation -> overlaps(reservation, checkInDate, checkOutDate, stayType));
 
             if (!overlaps) {
@@ -201,9 +208,11 @@ public class RoomService {
                 .trim();
     }
 
-    private RoomAvailabilityResponse buildRoomAvailability(RoomEntity room, LocalDate targetDate) {
-        List<ReservationEntity> roomReservations = reservationRepository.findByRoomIdAndCancelledFalse(room.getId());
-
+    private RoomAvailabilityResponse buildRoomAvailability(
+            RoomEntity room,
+            LocalDate targetDate,
+            List<ReservationEntity> roomReservations
+    ) {
         Optional<ReservationEntity> currentReservation = roomReservations.stream()
                 .filter(reservation -> reservation.getCheckInDate() != null && reservation.getCheckOutDate() != null)
                 .filter(reservation -> !targetDate.isBefore(reservation.getCheckInDate())
@@ -253,6 +262,21 @@ public class RoomService {
                 null,
                 null
         );
+    }
+
+    private Map<Long, List<ReservationEntity>> getReservationsByRoomId(List<RoomEntity> rooms) {
+        List<Long> roomIds = rooms.stream()
+                .map(RoomEntity::getId)
+                .filter(id -> id != null)
+                .toList();
+
+        if (roomIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return reservationRepository.findByRoomIdInAndCancelledFalse(roomIds).stream()
+                .filter(reservation -> reservation.getRoomId() != null)
+                .collect(Collectors.groupingBy(ReservationEntity::getRoomId, Collectors.mapping(Function.identity(), Collectors.toList())));
     }
 
     private void validateRoom(RoomEntity room) {
