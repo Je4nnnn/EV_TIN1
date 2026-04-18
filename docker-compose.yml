@@ -1,7 +1,7 @@
 services:
   backend:
     build:
-      context: ../Backend
+      context: ./Backend
     container_name: hotelrm-backend
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -23,7 +23,7 @@ services:
 
   frontend:
     build:
-      context: ../Frontend
+      context: ./Frontend
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL_DOCKER:-http://localhost:8091}
         VITE_PAYROLL_BACKEND_SERVER: ${VITE_PAYROLL_BACKEND_SERVER_DOCKER:-http://localhost:8091}

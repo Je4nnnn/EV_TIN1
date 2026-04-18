@@ -18,7 +18,6 @@ import {
 import CalendarHome from '../../components/CalendarHome'
 import TablePrices from '../../components/TablePrices'
 import { useNavigate } from 'react-router-dom'
-import { getReservas } from '../../services/CalendarHomeService'
 import { getTouristPackages } from '../../services/TouristPackageService'
 import { getAvailableRooms } from '../../services/RoomsService'
 
@@ -34,19 +33,12 @@ const ROOM_TYPES = [
   { value: 'Suite', label: 'Suite' },
 ]
 
-const normalizeStayType = (value) =>
-  (value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-
 const Home = () => {
   const [reservationMode, setReservationMode] = useState('manual')
   const [checkInDate, setCheckInDate] = useState(null)
   const [checkOutDate, setCheckOutDate] = useState(null)
   const [stayType, setStayType] = useState('')
   const [roomType, setRoomType] = useState('')
-  const [reservas, setReservas] = useState([])
   const [touristPackages, setTouristPackages] = useState([])
   const [selectedPackageId, setSelectedPackageId] = useState('')
   const [availableRooms, setAvailableRooms] = useState([])
@@ -54,19 +46,6 @@ const Home = () => {
   const [conflicto, setConflicto] = useState(false)
   const [feedback, setFeedback] = useState({ type: '', message: '' })
   const navigate = useNavigate()
-
-  useEffect(() => {
-    const fetchReservas = async () => {
-      try {
-        const data = await getReservas()
-        setReservas(data)
-      } catch (error) {
-        setFeedback({ type: 'error', message: error.message })
-      }
-    }
-
-    fetchReservas()
-  }, [])
 
   useEffect(() => {
     const fetchPackages = async () => {
@@ -93,8 +72,8 @@ const Home = () => {
     const selectedStayType = STAY_TYPES.find((type) => type.value === stayType)
     const checkout = checkInDate.add(selectedStayType?.checkoutDays || 0, 'day')
     setCheckOutDate(checkout)
-    verifyConflict(checkInDate, checkout, stayType)
-  }, [checkInDate, stayType, reservas])
+    verifyConflict()
+  }, [checkInDate, stayType])
 
   useEffect(() => {
     if (reservationMode !== 'package' || !selectedPackageId) {
@@ -120,8 +99,8 @@ const Home = () => {
     setCheckOutDate(packageCheckOut)
     setRoomType(selectedPackage.roomType)
     setStayType('Completo')
-    verifyConflict(packageCheckIn, packageCheckOut, 'Completo')
-  }, [reservationMode, selectedPackageId, touristPackages, reservas])
+    verifyConflict()
+  }, [reservationMode, selectedPackageId, touristPackages])
 
   useEffect(() => {
     const loadAvailableRooms = async () => {
@@ -169,19 +148,11 @@ const Home = () => {
   const handleCheckOutChange = (event) => {
     const newDate = dayjs(event.target.value)
     setCheckOutDate(newDate)
-    if (checkInDate && stayType) {
-      verifyConflict(checkInDate, newDate, stayType)
-    }
+    verifyConflict()
   }
 
-  const verifyConflict = (checkIn, checkOut, selectedStayType) => {
-    const hasConflict = reservas.some((reserva) => {
-      if (normalizeStayType(reserva.stayType) !== normalizeStayType(selectedStayType)) {
-        return false
-      }
-      return false
-    })
-    setConflicto(hasConflict)
+  const verifyConflict = () => {
+    setConflicto(false)
   }
 
   const handleContinue = () => {

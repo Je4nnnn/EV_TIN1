@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getValidAccessToken } from '../auth/keycloak'
 
 const baseURL =
   import.meta.env.VITE_API_BASE_URL ||
@@ -10,6 +11,17 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+})
+
+apiClient.interceptors.request.use(async (config) => {
+  const token = await getValidAccessToken()
+
+  if (token) {
+    config.headers = config.headers || {}
+    config.headers.Authorization = `Bearer ${token}`
+  }
+
+  return config
 })
 
 export const getApiErrorMessage = (error, fallbackMessage = 'Ocurrio un error inesperado.') => {

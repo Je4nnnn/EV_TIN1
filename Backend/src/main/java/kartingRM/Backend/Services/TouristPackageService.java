@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -40,6 +41,7 @@ public class TouristPackageService {
     }
 
     @Transactional
+    // CRITICO: controla cupos, estado y validez de fechas al consumir disponibilidad de un paquete.
     public TouristPackageEntity reservePackageSlot(Long id) {
         TouristPackageEntity touristPackage = getPackageById(id);
 
@@ -117,11 +119,6 @@ public class TouristPackageService {
         return touristPackageRepository.save(touristPackage);
     }
 
-    public void deletePackage(Long id) {
-        TouristPackageEntity touristPackage = getPackageById(id);
-        touristPackageRepository.delete(touristPackage);
-    }
-
     private void validatePackage(TouristPackageEntity touristPackage) {
         if (touristPackage == null) {
             throw new BusinessException("Debe enviar un paquete turistico valido.");
@@ -195,14 +192,14 @@ public class TouristPackageService {
 
     private List<String> cleanList(List<String> values) {
         if (values == null) {
-            return List.of();
+            return new ArrayList<>();
         }
 
         return values.stream()
                 .filter(value -> value != null && !value.isBlank())
                 .map(String::trim)
                 .distinct()
-                .toList();
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
     }
 
     private boolean isBlank(String value) {
@@ -215,13 +212,19 @@ public class TouristPackageService {
         }
 
         if (touristPackage.getDestinations() == null) {
-            touristPackage.setDestinations(new java.util.ArrayList<>());
+            touristPackage.setDestinations(new ArrayList<>());
+        } else {
+            touristPackage.setDestinations(new ArrayList<>(touristPackage.getDestinations()));
         }
         if (touristPackage.getActivities() == null) {
-            touristPackage.setActivities(new java.util.ArrayList<>());
+            touristPackage.setActivities(new ArrayList<>());
+        } else {
+            touristPackage.setActivities(new ArrayList<>(touristPackage.getActivities()));
         }
         if (touristPackage.getExtraServices() == null) {
-            touristPackage.setExtraServices(new java.util.ArrayList<>());
+            touristPackage.setExtraServices(new ArrayList<>());
+        } else {
+            touristPackage.setExtraServices(new ArrayList<>(touristPackage.getExtraServices()));
         }
         if (touristPackage.getAvailable() == null) {
             touristPackage.setAvailable(Boolean.FALSE);
@@ -239,5 +242,11 @@ public class TouristPackageService {
         touristPackage.getDestinations().size();
         touristPackage.getActivities().size();
         touristPackage.getExtraServices().size();
+    }
+
+    @Transactional
+    public void deletePackage(Long id) {
+        TouristPackageEntity touristPackage = getPackageById(id);
+        touristPackageRepository.delete(touristPackage);
     }
 }

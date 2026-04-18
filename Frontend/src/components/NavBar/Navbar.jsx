@@ -11,18 +11,24 @@ import {
   Typography,
 } from '@mui/material'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
+import { useAuth } from '../../auth/AuthContext'
 
 const navigationItems = [
   { to: '/rooms', label: 'Habitaciones' },
   { to: '/prices', label: 'Precios' },
-  { to: '/rack', label: 'Rack semanal' },
-  { to: '/reports', label: 'Reportes' },
-  { to: '/tourist-packages', label: 'Paquetes turisticos' },
+  { to: '/rack', label: 'Rack semanal', requiresAdmin: true },
+  { to: '/reports', label: 'Reportes', requiresAdmin: true },
+  { to: '/tourist-packages', label: 'Paquetes turisticos', requiresAdmin: true },
 ]
 
 export const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
+  const auth = useAuth()
+
+  const visibleNavigationItems = navigationItems.filter(
+    ({ requiresAdmin }) => !requiresAdmin || !auth.enabled || auth.hasRole(auth.adminRole),
+  )
 
   const renderNavButton = ({ to, label }) => (
     <Button
@@ -67,7 +73,23 @@ export const Navbar = () => {
           spacing={1}
           sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}
         >
-          {navigationItems.map(renderNavButton)}
+          {visibleNavigationItems.map(renderNavButton)}
+          {auth.enabled ? (
+            auth.authenticated ? (
+              <>
+                <Typography variant="body2" sx={{ ml: 1 }}>
+                  {auth.username}
+                </Typography>
+                <Button color="inherit" variant="outlined" onClick={() => auth.logout()}>
+                  Cerrar sesion
+                </Button>
+              </>
+            ) : (
+              <Button color="inherit" variant="outlined" onClick={() => auth.login()}>
+                Iniciar sesion
+              </Button>
+            )
+          ) : null}
         </Stack>
 
         <IconButton
@@ -85,7 +107,18 @@ export const Navbar = () => {
             <Typography variant="h6" sx={{ fontWeight: 700 }}>
               Navegacion
             </Typography>
-            {navigationItems.map(renderNavButton)}
+            {visibleNavigationItems.map(renderNavButton)}
+            {auth.enabled ? (
+              auth.authenticated ? (
+                <Button variant="outlined" onClick={() => auth.logout()}>
+                  Cerrar sesion
+                </Button>
+              ) : (
+                <Button variant="contained" onClick={() => auth.login()}>
+                  Iniciar sesion
+                </Button>
+              )
+            ) : null}
           </Stack>
         </Box>
       </Drawer>

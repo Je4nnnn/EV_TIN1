@@ -1,27 +1,23 @@
 pipeline {
     agent any
-    environment {
-        DOCKER_CONTEXT = 'default'
-    }
     stages {
+        stage("Checkout") {
+            steps {
+                checkout scm
+            }
+        }
         stage("Build Frontend") {
             steps {
-                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/matiasjava/tingesoEvaluacion1']])
                 dir("Frontend") {
-                    bat "npm install"
-                    bat "npm run build"
+                    sh "npm ci"
+                    sh "npm run build"
                 }
             }
         }
-        stage("Build and Push Docker Image") {
+        stage("Build Docker Image") {
             steps {
                 dir("Frontend") {
-                    script {
-                        withDockerRegistry(credentialsId: 'docker-credentials') {
-                            bat "docker build -t matiasvejar/kartingrm-frontend ."
-                            bat "docker push matiasvejar/kartingrm-frontend"
-                        }
-                    }
+                    sh "docker build -t hotelrm-frontend:${BUILD_NUMBER} ."
                 }
             }
         }

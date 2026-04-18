@@ -1,10 +1,34 @@
-FROM nginx:alpine
+FROM node:20-alpine AS build
 
-COPY /dist /usr/share/nginx/html
-COPY /nginx/conf.d /etc/nginx/conf.d
+WORKDIR /app
 
-# Expose port 3000 for the Nginx server
+ARG VITE_API_BASE_URL=http://localhost:8091
+ARG VITE_PAYROLL_BACKEND_SERVER=http://localhost:8091
+ARG VITE_KEYCLOAK_ENABLED=true
+ARG VITE_KEYCLOAK_URL=http://localhost:8080
+ARG VITE_KEYCLOAK_REALM=hotelrm
+ARG VITE_KEYCLOAK_CLIENT_ID=hotelrm-frontend
+ARG VITE_KEYCLOAK_ADMIN_ROLE=hotelrm_admin
+
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ENV VITE_PAYROLL_BACKEND_SERVER=${VITE_PAYROLL_BACKEND_SERVER}
+ENV VITE_KEYCLOAK_ENABLED=${VITE_KEYCLOAK_ENABLED}
+ENV VITE_KEYCLOAK_URL=${VITE_KEYCLOAK_URL}
+ENV VITE_KEYCLOAK_REALM=${VITE_KEYCLOAK_REALM}
+ENV VITE_KEYCLOAK_CLIENT_ID=${VITE_KEYCLOAK_CLIENT_ID}
+ENV VITE_KEYCLOAK_ADMIN_ROLE=${VITE_KEYCLOAK_ADMIN_ROLE}
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+FROM nginx:1.27-alpine
+
+COPY nginx/conf.d/frontend.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+
 EXPOSE 3000
 
-# Start Nginx when the container runs
 CMD ["nginx", "-g", "daemon off;"]

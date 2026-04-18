@@ -61,6 +61,7 @@ public class ReservationService {
     }
 
     @Transactional
+    // CRITICO: valida reglas principales de negocio, asigna habitacion, calcula descuentos y persiste la reserva.
     public ReservationEntity saveReservation(ReservationEntity reserve) {
         validateReservation(reserve);
         TouristPackageEntity selectedPackage = applyTouristPackageDataIfNeeded(reserve);
@@ -115,6 +116,7 @@ public class ReservationService {
         return reservationRepository.save(existingReserve);
     }
 
+    @Transactional
     public void deleteReservation(Long id) {
         ReservationEntity reservation = getReservationById(id);
         if (reservation.getTouristPackageId() != null) {

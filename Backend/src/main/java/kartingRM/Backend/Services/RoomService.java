@@ -72,6 +72,7 @@ public class RoomService {
             String roomType,
             String stayType
     ) {
+        // CRITICO: define disponibilidad real de habitaciones y evita solapamientos de reservas.
         if (checkInDate == null || checkOutDate == null) {
             throw new BusinessException("Debe indicar check-in y check-out para consultar disponibilidad.");
         }

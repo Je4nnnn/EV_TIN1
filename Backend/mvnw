@@ -32,6 +32,14 @@
 set -euf
 [ "${MVNW_VERBOSE-}" != debug ] || set -x
 
+SCRIPT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
+PROJECT_JAVA_HOME="${SCRIPT_DIR}/../tools/jdk-21"
+
+if [ -z "${JAVA_HOME-}" ] && [ -x "${PROJECT_JAVA_HOME}/bin/java" ] && [ -x "${PROJECT_JAVA_HOME}/bin/javac" ]; then
+  JAVA_HOME="${PROJECT_JAVA_HOME}"
+  export JAVA_HOME
+fi
+
 # OS specific support.
 native_path() { printf %s\\n "$1"; }
 case "$(uname)" in
