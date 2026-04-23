@@ -1,4 +1,4 @@
-package kartingRM.backend.services;
+package kartingRM.Backend.services;
 
 import kartingRM.Backend.Entities.UserEntity;
 import kartingRM.Backend.Exceptions.BusinessException;

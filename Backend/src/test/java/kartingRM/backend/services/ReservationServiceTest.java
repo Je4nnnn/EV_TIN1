@@ -1,4 +1,4 @@
-package kartingRM.backend.services;
+package kartingRM.Backend.services;
 
 import kartingRM.Backend.Entities.ReservationDetailsEntity;
 import kartingRM.Backend.Entities.ReservationEntity;

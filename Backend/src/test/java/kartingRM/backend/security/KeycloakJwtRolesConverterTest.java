@@ -1,4 +1,4 @@
-package kartingRM.backend.security;
+package kartingRM.Backend.security;
 
 import kartingRM.Backend.Security.KeycloakJwtRolesConverter;
 import org.junit.jupiter.api.Test;

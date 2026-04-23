@@ -1,5 +1,5 @@
 import { Box, Container } from '@mui/material'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { Navbar } from './components/NavBar/Navbar'
 import Home from './views/Home/Home'
 import Contact from './views/Contact/Contact'
@@ -21,7 +21,8 @@ function App() {
       <Navbar />
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/rooms" element={<Rooms />} />
           <Route path="/prices" element={<Prices />} />

@@ -6,6 +6,7 @@ import kartingRM.Backend.Services.ReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,11 +31,13 @@ public class ReservationController {
     private ReservationService reservationService;
 
     @GetMapping
+    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
     public ResponseEntity<List<ReservationEntity>> getAllReservations() {
         return ResponseEntity.ok(reservationService.getAllReservations());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
     public ResponseEntity<ReservationEntity> getReservationById(@PathVariable("id") Long id) {
         return ResponseEntity.ok(reservationService.getReservationById(id));
     }
@@ -50,6 +53,7 @@ public class ReservationController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
     public ResponseEntity<ReservationEntity> updateReservation(
             @PathVariable("id") Long id,
             @RequestBody ReservationEntity reserve
@@ -58,12 +62,14 @@ public class ReservationController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
     public ResponseEntity<ApiMessageResponse> deleteReservation(@PathVariable("id") Long id) {
         reservationService.deleteReservation(id);
         return ResponseEntity.ok(new ApiMessageResponse("Reserva eliminada correctamente."));
     }
 
     @GetMapping("/reports/room-type")
+    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
     public ResponseEntity<Map<String, Map<String, Double>>> getReportePorTipoHabitacion(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
@@ -74,6 +80,7 @@ public class ReservationController {
     }
 
     @GetMapping("/reports/guest-count")
+    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
     public ResponseEntity<Map<String, Map<String, Double>>> getReportePorCantidadPersonas(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin

@@ -5,6 +5,7 @@ import kartingRM.Backend.Entities.TouristPackageEntity;
 import kartingRM.Backend.Services.TouristPackageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,11 +44,13 @@ public class TouristPackageController {
     }
 
     @PostMapping
+    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
     public ResponseEntity<TouristPackageEntity> createPackage(@RequestBody TouristPackageEntity touristPackage) {
         return ResponseEntity.ok(touristPackageService.createPackage(touristPackage));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
     public ResponseEntity<TouristPackageEntity> updatePackage(
             @PathVariable Long id,
             @RequestBody TouristPackageEntity touristPackage
@@ -56,6 +59,7 @@ public class TouristPackageController {
     }
 
     @PatchMapping("/{id}/availability")
+    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
     public ResponseEntity<TouristPackageEntity> updateAvailability(
             @PathVariable Long id,
             @RequestParam("available") boolean available
@@ -64,6 +68,7 @@ public class TouristPackageController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
     public ResponseEntity<ApiMessageResponse> deletePackage(@PathVariable Long id) {
         touristPackageService.deletePackage(id);
         return ResponseEntity.ok(new ApiMessageResponse("Paquete turistico eliminado correctamente."));

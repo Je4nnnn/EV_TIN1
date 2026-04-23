@@ -2,6 +2,7 @@ package kartingRM.Backend.Controllers;
 
 import kartingRM.Backend.DTOs.AuthenticatedUserResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -20,6 +21,7 @@ import java.util.List;
 public class AuthController {
 
     @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AuthenticatedUserResponse> me(Authentication authentication) {
         Jwt jwt = ((JwtAuthenticationToken) authentication).getToken();
         List<String> authorities = authentication.getAuthorities().stream()

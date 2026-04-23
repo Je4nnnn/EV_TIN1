@@ -6,6 +6,7 @@ import kartingRM.Backend.Services.RoomService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -54,6 +55,7 @@ public class RoomController {
     }
 
     @PostMapping
+    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
     public ResponseEntity<RoomEntity> addRoom(@RequestBody RoomEntity room) {
         return ResponseEntity.ok(roomService.saveRoom(room));
     }

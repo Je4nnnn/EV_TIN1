@@ -61,7 +61,7 @@ export const Navbar = () => {
       <Toolbar sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
         <Typography
           component={RouterLink}
-          to="/"
+          to="/home"
           variant="h5"
           sx={{ fontWeight: 800, letterSpacing: 0.3 }}
         >

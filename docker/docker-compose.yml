@@ -5,7 +5,7 @@ services:
     container_name: hotelrm-backend
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SERVER_PORT: 8091
+      SERVER_PORT: 8090
       DB_HOST: ${DB_HOST_DOCKER:-host.docker.internal}
       DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-hotelrm}
@@ -15,18 +15,18 @@ services:
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-hotelrm-frontend}
       KEYCLOAK_ADMIN_ROLE: ${KEYCLOAK_ADMIN_ROLE:-hotelrm_admin}
       KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI_DOCKER:-http://host.docker.internal:8080/realms/${KEYCLOAK_REALM:-hotelrm}}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS_DOCKER:-http://localhost:3000,http://localhost:5173,http://localhost:4173}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS_DOCKER:-http://localhost:8070,http://localhost:5173,http://localhost:4173}
     extra_hosts:
       - host.docker.internal:host-gateway
     ports:
-      - "8091:8091"
+      - "8090:8090"
 
   frontend:
     build:
       context: ../Frontend
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL_DOCKER:-http://localhost:8091}
-        VITE_PAYROLL_BACKEND_SERVER: ${VITE_PAYROLL_BACKEND_SERVER_DOCKER:-http://localhost:8091}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL_DOCKER:-http://localhost:8090}
+        VITE_PAYROLL_BACKEND_SERVER: ${VITE_PAYROLL_BACKEND_SERVER_DOCKER:-http://localhost:8090}
         VITE_KEYCLOAK_ENABLED: ${VITE_KEYCLOAK_ENABLED:-true}
         VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL_DOCKER:-http://localhost:8080}
         VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-hotelrm}
@@ -36,4 +36,4 @@ services:
     depends_on:
       - backend
     ports:
-      - "3000:3000"
+      - "8070:80"

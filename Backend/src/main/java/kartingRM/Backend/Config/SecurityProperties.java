@@ -70,7 +70,7 @@ public class SecurityProperties {
     public static class Cors {
         private List<String> allowedOrigins = new ArrayList<>(List.of(
                 "http://localhost:5173",
-                "http://localhost:3000",
+                "http://localhost:8070",
                 "http://localhost:4173"
         ));
 

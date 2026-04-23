@@ -1,0 +1,115 @@
+services:
+  backend1:
+    build:
+      context: ../Backend
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8090
+      DB_HOST: ${DB_HOST_DOCKER:-host.docker.internal}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-hotelrm}
+      DB_USER: ${DB_USER:-hotelrm_app}
+      DB_PASSWORD: ${DB_PASSWORD:-changeit}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-hotelrm}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-hotelrm-frontend}
+      KEYCLOAK_ADMIN_ROLE: ${KEYCLOAK_ADMIN_ROLE:-hotelrm_admin}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI_DOCKER:-http://host.docker.internal:8080/realms/${KEYCLOAK_REALM:-hotelrm}}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS_DOCKER:-http://localhost:8070,http://localhost:5173,http://localhost:4173}
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
+  backend2:
+    build:
+      context: ../Backend
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8090
+      DB_HOST: ${DB_HOST_DOCKER:-host.docker.internal}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-hotelrm}
+      DB_USER: ${DB_USER:-hotelrm_app}
+      DB_PASSWORD: ${DB_PASSWORD:-changeit}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-hotelrm}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-hotelrm-frontend}
+      KEYCLOAK_ADMIN_ROLE: ${KEYCLOAK_ADMIN_ROLE:-hotelrm_admin}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI_DOCKER:-http://host.docker.internal:8080/realms/${KEYCLOAK_REALM:-hotelrm}}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS_DOCKER:-http://localhost:8070,http://localhost:5173,http://localhost:4173}
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
+  backend3:
+    build:
+      context: ../Backend
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8090
+      DB_HOST: ${DB_HOST_DOCKER:-host.docker.internal}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-hotelrm}
+      DB_USER: ${DB_USER:-hotelrm_app}
+      DB_PASSWORD: ${DB_PASSWORD:-changeit}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-hotelrm}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-hotelrm-frontend}
+      KEYCLOAK_ADMIN_ROLE: ${KEYCLOAK_ADMIN_ROLE:-hotelrm_admin}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI_DOCKER:-http://host.docker.internal:8080/realms/${KEYCLOAK_REALM:-hotelrm}}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS_DOCKER:-http://localhost:8070,http://localhost:5173,http://localhost:4173}
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
+  backend-lb:
+    image: nginx:1.27-alpine
+    depends_on:
+      - backend1
+      - backend2
+      - backend3
+    volumes:
+      - ./nginx-backend.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8090:8090"
+
+  frontend1:
+    build:
+      context: ../Frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL_DOCKER:-http://localhost:8090}
+        VITE_PAYROLL_BACKEND_SERVER: ${VITE_PAYROLL_BACKEND_SERVER_DOCKER:-http://localhost:8090}
+        VITE_KEYCLOAK_ENABLED: ${VITE_KEYCLOAK_ENABLED:-true}
+        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL_DOCKER:-http://localhost:8080}
+        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-hotelrm}
+        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-hotelrm-frontend}
+        VITE_KEYCLOAK_ADMIN_ROLE: ${VITE_KEYCLOAK_ADMIN_ROLE:-hotelrm_admin}
+
+  frontend2:
+    build:
+      context: ../Frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL_DOCKER:-http://localhost:8090}
+        VITE_PAYROLL_BACKEND_SERVER: ${VITE_PAYROLL_BACKEND_SERVER_DOCKER:-http://localhost:8090}
+        VITE_KEYCLOAK_ENABLED: ${VITE_KEYCLOAK_ENABLED:-true}
+        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL_DOCKER:-http://localhost:8080}
+        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-hotelrm}
+        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-hotelrm-frontend}
+        VITE_KEYCLOAK_ADMIN_ROLE: ${VITE_KEYCLOAK_ADMIN_ROLE:-hotelrm_admin}
+
+  frontend3:
+    build:
+      context: ../Frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL_DOCKER:-http://localhost:8090}
+        VITE_PAYROLL_BACKEND_SERVER: ${VITE_PAYROLL_BACKEND_SERVER_DOCKER:-http://localhost:8090}
+        VITE_KEYCLOAK_ENABLED: ${VITE_KEYCLOAK_ENABLED:-true}
+        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL_DOCKER:-http://localhost:8080}
+        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-hotelrm}
+        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-hotelrm-frontend}
+        VITE_KEYCLOAK_ADMIN_ROLE: ${VITE_KEYCLOAK_ADMIN_ROLE:-hotelrm_admin}
+
+  frontend-lb:
+    image: nginx:1.27-alpine
+    depends_on:
+      - frontend1
+      - frontend2
+      - frontend3
+    volumes:
+      - ./nginx-frontend.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8070:80"

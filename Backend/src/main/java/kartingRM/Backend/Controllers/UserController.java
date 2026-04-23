@@ -4,6 +4,7 @@ import kartingRM.Backend.Entities.UserEntity;
 import kartingRM.Backend.Services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,11 +26,13 @@ public class UserController {
     private UserService userService;
 
     @GetMapping
+    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
     public ResponseEntity<List<UserEntity>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
     public ResponseEntity<UserEntity> getUserById(@PathVariable("id") long id) {
         return ResponseEntity.ok(userService.findUserById(id));
     }
@@ -49,11 +52,13 @@ public class UserController {
     }
 
     @PutMapping("/{id}/update-category")
+    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
     public ResponseEntity<UserEntity> updateCategoryFrequency(@PathVariable("id") Long userId) {
         return ResponseEntity.ok(userService.updateCategoryFrequency(userId));
     }
 
     @PutMapping("/{id}/update-visits")
+    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
     public ResponseEntity<UserEntity> updateNumberVisits(
             @PathVariable("id") Long userId,
             @RequestParam("visits") int newVisits
@@ -62,6 +67,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}/increment-visits")
+    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
     public ResponseEntity<UserEntity> incrementVisitsAndUpdateCategory(@PathVariable("id") Long userId) {
         return ResponseEntity.ok(userService.incrementVisitsAndUpdateCategory(userId));
     }
