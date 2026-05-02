@@ -4,10 +4,10 @@ Proyecto full stack de gestion hotelera con backend Spring Boot, frontend React/
 
 ## Arquitectura operativa
 
-- Frontend Docker/Nginx: `http://localhost:3001`
+- Frontend Docker/Nginx: `http://127.0.0.1/home`
 - Frontend local con Vite: `http://localhost:5173/home`
 - Backend Spring Boot: `http://localhost:8091`
-- Swagger/OpenAPI: `http://localhost:8091/swagger-ui/index.html`
+- Swagger/OpenAPI: `http://127.0.0.1:8091/swagger-ui/index.html`
 - Keycloak Docker: `http://localhost:8080`
 - PostgreSQL Docker: `localhost:5432`
 - Jenkins local: `http://localhost:8081`
