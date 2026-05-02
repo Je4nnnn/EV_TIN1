@@ -1,5 +1,5 @@
 import { Alert, Box, Button, CircularProgress, Stack, Typography } from '@mui/material'
-import { useAuth } from '../../auth/AuthContext'
+import { useAuth } from '../../auth/useAuth'
 
 export const RequireRole = ({ role, children }) => {
   const auth = useAuth()

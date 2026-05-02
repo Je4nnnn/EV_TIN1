@@ -24,6 +24,19 @@ export const getTouristPackages = async (availableOnly = false) => {
   }
 }
 
+export const searchTouristPackages = async (filters = {}) => {
+  try {
+    const response = await apiClient.get(`${API_URL}/search`, {
+      params: Object.fromEntries(
+        Object.entries(filters).filter(([, value]) => value !== undefined && value !== null && value !== ''),
+      ),
+    })
+    return Array.isArray(response.data) ? response.data.map(normalizePackage) : []
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, 'No fue posible buscar paquetes turisticos.'))
+  }
+}
+
 export const createTouristPackage = async (payload) => {
   try {
     const response = await apiClient.post(API_URL, payload)

@@ -5,16 +5,28 @@ import {
   CardContent,
   CircularProgress,
   Grid,
+  Paper,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Typography,
 } from '@mui/material'
-import { fetchReporteIngresos, fetchReporteParticipantes } from '../../services/ReportsService'
-import ReportTable from '../../components/ReportTable'
+import { fetchPackageRankingReport, fetchSalesReport } from '../../services/ReportsService'
+
+const currencyFormatter = new Intl.NumberFormat('es-CL', {
+  style: 'currency',
+  currency: 'CLP',
+  maximumFractionDigits: 0,
+})
 
 const Reports = () => {
-  const [reporte, setReporte] = useState(null)
-  const [reporteParticipantes, setReporteParticipantes] = useState(null)
+  const [salesReport, setSalesReport] = useState([])
+  const [rankingReport, setRankingReport] = useState([])
   const [fechaInicio, setFechaInicio] = useState('2026-01-01')
   const [fechaFin, setFechaFin] = useState('2026-12-31')
   const [loading, setLoading] = useState(true)
@@ -26,13 +38,13 @@ const Reports = () => {
       setError('')
 
       try {
-        const [incomeReport, participantsReport] = await Promise.all([
-          fetchReporteIngresos(fechaInicio, fechaFin),
-          fetchReporteParticipantes(fechaInicio, fechaFin),
+        const [sales, ranking] = await Promise.all([
+          fetchSalesReport(fechaInicio, fechaFin),
+          fetchPackageRankingReport(fechaInicio, fechaFin),
         ])
 
-        setReporte(incomeReport)
-        setReporteParticipantes(participantsReport)
+        setSalesReport(sales)
+        setRankingReport(ranking)
       } catch (reportError) {
         setError(reportError.message)
       } finally {
@@ -46,9 +58,9 @@ const Reports = () => {
   return (
     <Stack spacing={3}>
       <Stack spacing={1}>
-        <Typography variant="h4">Reportes operativos</Typography>
+        <Typography variant="h4">Reportes comerciales</Typography>
         <Typography variant="body1" color="text.secondary">
-          Consulta ingresos consolidados por tipo de habitacion y por volumen de huespedes.
+          Consulta ventas por periodo y ranking de paquetes vendidos.
         </Typography>
       </Stack>
 
@@ -81,9 +93,66 @@ const Reports = () => {
 
       {loading ? <CircularProgress /> : null}
       {error ? <Alert severity="error">{error}</Alert> : null}
-      {!loading && !error && reporte ? <ReportTable reporte={reporte} title="Ingresos por tipo de habitacion" /> : null}
-      {!loading && !error && reporteParticipantes ? (
-        <ReportTable reporte={reporteParticipantes} title="Ingresos por cantidad de huespedes" />
+      {!loading && !error ? (
+        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid rgba(15, 23, 42, 0.08)' }}>
+          <Typography variant="h6" sx={{ px: 2, pt: 2, fontWeight: 700 }}>
+            Ventas por periodo
+          </Typography>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Fecha</TableCell>
+                <TableCell>Cliente</TableCell>
+                <TableCell>Paquete</TableCell>
+                <TableCell align="right">Pasajeros</TableCell>
+                <TableCell align="right">Total</TableCell>
+                <TableCell align="right">Pagado</TableCell>
+                <TableCell>Estado</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {salesReport.map((row) => (
+                <TableRow key={`${row.operationDate}-${row.clientName}-${row.packageName}`} hover>
+                  <TableCell>{row.operationDate?.slice(0, 10)}</TableCell>
+                  <TableCell>{row.clientName}</TableCell>
+                  <TableCell>{row.packageName}</TableCell>
+                  <TableCell align="right">{row.passengerCount}</TableCell>
+                  <TableCell align="right">{currencyFormatter.format(row.reservationTotal || 0)}</TableCell>
+                  <TableCell align="right">{currencyFormatter.format(row.paidAmount || 0)}</TableCell>
+                  <TableCell>{row.status}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ) : null}
+
+      {!loading && !error ? (
+        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid rgba(15, 23, 42, 0.08)' }}>
+          <Typography variant="h6" sx={{ px: 2, pt: 2, fontWeight: 700 }}>
+            Ranking de paquetes
+          </Typography>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Paquete</TableCell>
+                <TableCell align="right">Reservas</TableCell>
+                <TableCell align="right">Pasajeros</TableCell>
+                <TableCell align="right">Monto generado</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {rankingReport.map((row) => (
+                <TableRow key={row.packageId} hover>
+                  <TableCell>{row.packageName}</TableCell>
+                  <TableCell align="right">{row.reservationsCount}</TableCell>
+                  <TableCell align="right">{row.passengerCount}</TableCell>
+                  <TableCell align="right">{currencyFormatter.format(row.totalAmount || 0)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       ) : null}
     </Stack>
   )

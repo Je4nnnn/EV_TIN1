@@ -37,6 +37,9 @@ const initialForm = {
   daysCount: 1,
   nightsCount: 0,
   roomType: 'Simple',
+  travelType: 'GENERAL',
+  season: 'REGULAR',
+  category: 'STANDARD',
   transferIncluded: true,
   automobileServiceIncluded: false,
   price: '',
@@ -46,6 +49,10 @@ const initialForm = {
   maxGuests: 2,
   availableFrom: '',
   availableUntil: '',
+  promotionActive: false,
+  promotionDiscountPercent: 0,
+  promotionStartDate: '',
+  promotionEndDate: '',
 }
 
 const TouristPackages = () => {
@@ -94,6 +101,9 @@ const TouristPackages = () => {
       daysCount: touristPackage.daysCount,
       nightsCount: touristPackage.nightsCount,
       roomType: touristPackage.roomType,
+      travelType: touristPackage.travelType || 'GENERAL',
+      season: touristPackage.season || 'REGULAR',
+      category: touristPackage.category || 'STANDARD',
       transferIncluded: touristPackage.transferIncluded,
       automobileServiceIncluded: touristPackage.automobileServiceIncluded,
       price: touristPackage.price,
@@ -103,6 +113,10 @@ const TouristPackages = () => {
       maxGuests: touristPackage.maxGuests,
       availableFrom: touristPackage.availableFrom || '',
       availableUntil: touristPackage.availableUntil || '',
+      promotionActive: Boolean(touristPackage.promotionActive),
+      promotionDiscountPercent: touristPackage.promotionDiscountPercent || 0,
+      promotionStartDate: touristPackage.promotionStartDate || '',
+      promotionEndDate: touristPackage.promotionEndDate || '',
     })
     setDialogOpen(true)
   }
@@ -128,6 +142,9 @@ const TouristPackages = () => {
     daysCount: Number(formData.daysCount),
     nightsCount: Number(formData.nightsCount),
     roomType: formData.roomType,
+    travelType: formData.travelType,
+    season: formData.season,
+    category: formData.category,
     transferIncluded: Boolean(formData.transferIncluded),
     automobileServiceIncluded: Boolean(formData.automobileServiceIncluded),
     price: Number(formData.price),
@@ -137,6 +154,10 @@ const TouristPackages = () => {
     maxGuests: Number(formData.maxGuests),
     availableFrom: formData.availableFrom || null,
     availableUntil: formData.availableUntil || null,
+    promotionActive: Boolean(formData.promotionActive),
+    promotionDiscountPercent: Number(formData.promotionDiscountPercent),
+    promotionStartDate: formData.promotionStartDate || null,
+    promotionEndDate: formData.promotionEndDate || null,
   })
 
   const handleSubmit = async () => {
@@ -228,12 +249,16 @@ const TouristPackages = () => {
                   </Typography>
                   <Typography variant="body2">Habitacion incluida: {touristPackage.roomType}</Typography>
                   <Typography variant="body2">
+                    Tipo: {touristPackage.travelType || 'GENERAL'} | Temporada: {touristPackage.season || 'REGULAR'}
+                  </Typography>
+                  <Typography variant="body2">
                     Cupos: {touristPackage.availableSlots} | Capacidad maxima: {touristPackage.maxGuests}
                   </Typography>
                   <Typography variant="body2">Precio: ${Number(touristPackage.price).toLocaleString('es-CL')}</Typography>
                   <Stack direction="row" spacing={1} flexWrap="wrap">
                     {touristPackage.transferIncluded ? <Chip label="Traslado incluido" size="small" /> : null}
                     {touristPackage.automobileServiceIncluded ? <Chip label="Servicio automovil" size="small" /> : null}
+                    {touristPackage.promotionActive ? <Chip label={`${touristPackage.promotionDiscountPercent}% promo`} size="small" color="warning" /> : null}
                     <Chip label={touristPackage.status} size="small" variant="outlined" />
                   </Stack>
                 </Stack>
@@ -271,6 +296,30 @@ const TouristPackages = () => {
                 label="Estado"
                 value={formData.status}
                 onChange={(event) => handleChange('status', event.target.value)}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Tipo de viaje"
+                value={formData.travelType}
+                onChange={(event) => handleChange('travelType', event.target.value)}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Temporada"
+                value={formData.season}
+                onChange={(event) => handleChange('season', event.target.value)}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Categoria"
+                value={formData.category}
+                onChange={(event) => handleChange('category', event.target.value)}
                 fullWidth
               />
             </Grid>
@@ -353,6 +402,18 @@ const TouristPackages = () => {
             </Grid>
             <Grid item xs={12} md={4}>
               <FormControlLabel control={<Switch checked={formData.automobileServiceIncluded} onChange={(event) => handleChange('automobileServiceIncluded', event.target.checked)} />} label="Incluye automovil" />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControlLabel control={<Switch checked={formData.promotionActive} onChange={(event) => handleChange('promotionActive', event.target.checked)} />} label="Promocion activa" />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField type="number" label="% promocion" value={formData.promotionDiscountPercent} onChange={(event) => handleChange('promotionDiscountPercent', event.target.value)} fullWidth />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField type="date" label="Inicio promocion" value={formData.promotionStartDate} onChange={(event) => handleChange('promotionStartDate', event.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField type="date" label="Fin promocion" value={formData.promotionEndDate} onChange={(event) => handleChange('promotionEndDate', event.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
             </Grid>
           </Grid>
         </DialogContent>

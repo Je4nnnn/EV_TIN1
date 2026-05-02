@@ -3,6 +3,7 @@ package kartingRM.Backend.Services;
 import kartingRM.Backend.Entities.TouristPackageEntity;
 import kartingRM.Backend.Exceptions.BusinessException;
 import kartingRM.Backend.Exceptions.ResourceNotFoundException;
+import kartingRM.Backend.Repositories.ReservationRepository;
 import kartingRM.Backend.Repositories.TouristPackageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,9 @@ public class TouristPackageService {
     @Autowired
     private TouristPackageRepository touristPackageRepository;
 
+    @Autowired
+    private ReservationRepository reservationRepository;
+
     @Transactional(readOnly = true)
     public List<TouristPackageEntity> getAllPackages() {
         List<TouristPackageEntity> packages = touristPackageRepository.findAll();
@@ -29,7 +33,35 @@ public class TouristPackageService {
     public List<TouristPackageEntity> getAvailablePackages() {
         List<TouristPackageEntity> packages = touristPackageRepository.findByAvailableTrueOrderByPackageNameAsc();
         packages.forEach(this::normalizePackageForRead);
-        return packages;
+        LocalDate today = LocalDate.now();
+        return packages.stream()
+                .filter(touristPackage -> isPubliclyBookable(touristPackage, today))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<TouristPackageEntity> searchAvailablePackages(
+            String destination,
+            LocalDate startDate,
+            LocalDate endDate,
+            Double minPrice,
+            Double maxPrice,
+            Integer minDays,
+            Integer maxDays,
+            String travelType
+    ) {
+        return getAvailablePackages().stream()
+                .filter(touristPackage -> matchesDestination(touristPackage, destination))
+                .filter(touristPackage -> startDate == null || !touristPackage.getAvailableFrom().isBefore(startDate))
+                .filter(touristPackage -> endDate == null || !touristPackage.getAvailableUntil().isAfter(endDate))
+                .filter(touristPackage -> minPrice == null || touristPackage.getPrice() >= minPrice)
+                .filter(touristPackage -> maxPrice == null || touristPackage.getPrice() <= maxPrice)
+                .filter(touristPackage -> minDays == null || touristPackage.getDaysCount() >= minDays)
+                .filter(touristPackage -> maxDays == null || touristPackage.getDaysCount() <= maxDays)
+                .filter(touristPackage -> isBlank(travelType)
+                        || (touristPackage.getTravelType() != null
+                        && touristPackage.getTravelType().equalsIgnoreCase(travelType.trim())))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -43,7 +75,16 @@ public class TouristPackageService {
     @Transactional
     // CRITICO: controla cupos, estado y validez de fechas al consumir disponibilidad de un paquete.
     public TouristPackageEntity reservePackageSlot(Long id) {
+        return reservePackageSlots(id, 1);
+    }
+
+    @Transactional
+    public TouristPackageEntity reservePackageSlots(Long id, int requestedSlots) {
         TouristPackageEntity touristPackage = getPackageById(id);
+
+        if (requestedSlots <= 0) {
+            throw new BusinessException("La cantidad de cupos solicitada debe ser mayor a cero.");
+        }
 
         if (!Boolean.TRUE.equals(touristPackage.getAvailable())) {
             throw new BusinessException("El paquete turistico seleccionado no esta disponible.");
@@ -57,7 +98,15 @@ public class TouristPackageService {
             throw new BusinessException("El paquete turistico debe tener fechas disponibles para poder reservarse.");
         }
 
-        touristPackage.setAvailableSlots(touristPackage.getAvailableSlots() - 1);
+        if (!isPubliclyBookable(touristPackage, LocalDate.now())) {
+            throw new BusinessException("El paquete turistico no se encuentra vigente para clientes.");
+        }
+
+        if (touristPackage.getAvailableSlots() < requestedSlots) {
+            throw new BusinessException("La cantidad solicitada excede los cupos disponibles del paquete.");
+        }
+
+        touristPackage.setAvailableSlots(touristPackage.getAvailableSlots() - requestedSlots);
         touristPackage.setAvailable(touristPackage.getAvailableSlots() > 0);
         if (!touristPackage.getAvailable()) {
             touristPackage.setStatus("UNAVAILABLE");
@@ -96,6 +145,10 @@ public class TouristPackageService {
         existingPackage.setExtraServices(payload.getExtraServices());
         existingPackage.setDaysCount(payload.getDaysCount());
         existingPackage.setNightsCount(payload.getNightsCount());
+        existingPackage.setRoomType(payload.getRoomType());
+        existingPackage.setTravelType(payload.getTravelType());
+        existingPackage.setSeason(payload.getSeason());
+        existingPackage.setCategory(payload.getCategory());
         existingPackage.setTransferIncluded(payload.getTransferIncluded());
         existingPackage.setAutomobileServiceIncluded(payload.getAutomobileServiceIncluded());
         existingPackage.setPrice(payload.getPrice());
@@ -105,6 +158,10 @@ public class TouristPackageService {
         existingPackage.setMaxGuests(payload.getMaxGuests());
         existingPackage.setAvailableFrom(payload.getAvailableFrom());
         existingPackage.setAvailableUntil(payload.getAvailableUntil());
+        existingPackage.setPromotionActive(payload.getPromotionActive());
+        existingPackage.setPromotionDiscountPercent(payload.getPromotionDiscountPercent());
+        existingPackage.setPromotionStartDate(payload.getPromotionStartDate());
+        existingPackage.setPromotionEndDate(payload.getPromotionEndDate());
 
         validatePackage(existingPackage);
         normalizePackage(existingPackage);
@@ -169,6 +226,7 @@ public class TouristPackageService {
         }
 
         validateAvailabilityWindow(touristPackage.getAvailableFrom(), touristPackage.getAvailableUntil());
+        validatePromotionWindow(touristPackage);
     }
 
     private void normalizePackage(TouristPackageEntity touristPackage) {
@@ -178,15 +236,44 @@ public class TouristPackageService {
         touristPackage.setActivities(cleanList(touristPackage.getActivities()));
         touristPackage.setExtraServices(cleanList(touristPackage.getExtraServices()));
         touristPackage.setRoomType(touristPackage.getRoomType().trim());
+        touristPackage.setTravelType(cleanOptional(touristPackage.getTravelType(), "GENERAL"));
+        touristPackage.setSeason(cleanOptional(touristPackage.getSeason(), "REGULAR"));
+        touristPackage.setCategory(cleanOptional(touristPackage.getCategory(), "STANDARD"));
         touristPackage.setStatus(touristPackage.getStatus().trim().toUpperCase());
-        touristPackage.setAvailable(Boolean.TRUE.equals(touristPackage.getAvailable()) && touristPackage.getAvailableSlots() > 0);
+        touristPackage.setAvailable(Boolean.TRUE.equals(touristPackage.getAvailable())
+                && touristPackage.getAvailableSlots() > 0
+                && isPubliclyBookable(touristPackage, LocalDate.now()));
         touristPackage.setTransferIncluded(Boolean.TRUE.equals(touristPackage.getTransferIncluded()));
         touristPackage.setAutomobileServiceIncluded(Boolean.TRUE.equals(touristPackage.getAutomobileServiceIncluded()));
+        touristPackage.setPromotionActive(Boolean.TRUE.equals(touristPackage.getPromotionActive()));
+        if (touristPackage.getPromotionDiscountPercent() == null || !touristPackage.getPromotionActive()) {
+            touristPackage.setPromotionDiscountPercent(0.0);
+        }
     }
 
     private void validateAvailabilityWindow(LocalDate availableFrom, LocalDate availableUntil) {
         if (availableFrom != null && availableUntil != null && availableUntil.isBefore(availableFrom)) {
             throw new BusinessException("La fecha fin de disponibilidad no puede ser anterior a la fecha inicio.");
+        }
+    }
+
+    private void validatePromotionWindow(TouristPackageEntity touristPackage) {
+        if (!Boolean.TRUE.equals(touristPackage.getPromotionActive())) {
+            return;
+        }
+
+        if (touristPackage.getPromotionDiscountPercent() == null
+                || touristPackage.getPromotionDiscountPercent() <= 0
+                || touristPackage.getPromotionDiscountPercent() > 100) {
+            throw new BusinessException("El descuento de la promocion debe estar entre 0 y 100.");
+        }
+
+        if (touristPackage.getPromotionStartDate() == null || touristPackage.getPromotionEndDate() == null) {
+            throw new BusinessException("La promocion debe tener fecha de inicio y termino.");
+        }
+
+        if (touristPackage.getPromotionEndDate().isBefore(touristPackage.getPromotionStartDate())) {
+            throw new BusinessException("La fecha termino de promocion no puede ser anterior a la fecha inicio.");
         }
     }
 
@@ -204,6 +291,35 @@ public class TouristPackageService {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private String cleanOptional(String value, String defaultValue) {
+        return isBlank(value) ? defaultValue : value.trim().toUpperCase();
+    }
+
+    private boolean matchesDestination(TouristPackageEntity touristPackage, String destination) {
+        if (isBlank(destination)) {
+            return true;
+        }
+
+        String normalizedDestination = destination.trim().toLowerCase();
+        return touristPackage.getDestinations().stream()
+                .anyMatch(value -> value.toLowerCase().contains(normalizedDestination));
+    }
+
+    public boolean isPubliclyBookable(TouristPackageEntity touristPackage, LocalDate referenceDate) {
+        if (touristPackage == null || referenceDate == null) {
+            return false;
+        }
+
+        return Boolean.TRUE.equals(touristPackage.getAvailable())
+                && touristPackage.getAvailableSlots() != null
+                && touristPackage.getAvailableSlots() > 0
+                && "AVAILABLE".equalsIgnoreCase(touristPackage.getStatus())
+                && touristPackage.getAvailableFrom() != null
+                && touristPackage.getAvailableUntil() != null
+                && !touristPackage.getAvailableUntil().isBefore(referenceDate)
+                && !touristPackage.getAvailableUntil().isBefore(touristPackage.getAvailableFrom());
     }
 
     private void normalizePackageForRead(TouristPackageEntity touristPackage) {
@@ -238,6 +354,21 @@ public class TouristPackageService {
         if (touristPackage.getStatus() == null || touristPackage.getStatus().isBlank()) {
             touristPackage.setStatus(Boolean.TRUE.equals(touristPackage.getAvailable()) ? "AVAILABLE" : "UNAVAILABLE");
         }
+        if (touristPackage.getTravelType() == null || touristPackage.getTravelType().isBlank()) {
+            touristPackage.setTravelType("GENERAL");
+        }
+        if (touristPackage.getSeason() == null || touristPackage.getSeason().isBlank()) {
+            touristPackage.setSeason("REGULAR");
+        }
+        if (touristPackage.getCategory() == null || touristPackage.getCategory().isBlank()) {
+            touristPackage.setCategory("STANDARD");
+        }
+        if (touristPackage.getPromotionActive() == null) {
+            touristPackage.setPromotionActive(Boolean.FALSE);
+        }
+        if (touristPackage.getPromotionDiscountPercent() == null) {
+            touristPackage.setPromotionDiscountPercent(0.0);
+        }
 
         touristPackage.getDestinations().size();
         touristPackage.getActivities().size();
@@ -247,6 +378,13 @@ public class TouristPackageService {
     @Transactional
     public void deletePackage(Long id) {
         TouristPackageEntity touristPackage = getPackageById(id);
+        if (reservationRepository.existsByTouristPackageIdAndCancelledFalse(id)) {
+            touristPackage.setAvailable(false);
+            touristPackage.setStatus("CANCELLED");
+            touristPackageRepository.save(touristPackage);
+            return;
+        }
+
         touristPackageRepository.delete(touristPackage);
     }
 }

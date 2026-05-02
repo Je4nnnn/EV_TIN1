@@ -11,11 +11,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -165,6 +168,71 @@ class UserServiceTest {
         assertEquals("Usuario no encontrado con ID: 404", exception.getMessage());
     }
 
+    @Test
+    void saveUser_givenInvalidRut_whenSaved_thenThrowsBusinessException() {
+        // GIVEN
+        UserEntity user = buildUser(1L, 0, "No frecuente");
+        user.setRut("11111111-2");
+        user.setDateBirthday(LocalDate.of(1992, 5, 10));
+
+        // WHEN
+        BusinessException exception = assertThrows(BusinessException.class, () -> userService.saveUser(user));
+
+        // THEN
+        assertEquals("El RUT ingresado no es valido.", exception.getMessage());
+    }
+
+    @Test
+    void saveUser_givenFutureBirthday_whenSaved_thenThrowsBusinessException() {
+        // GIVEN
+        UserEntity user = buildUser(1L, 0, "No frecuente");
+        user.setRut("11111111-1");
+        user.setDateBirthday(LocalDate.now().plusDays(1));
+
+        // WHEN
+        BusinessException exception = assertThrows(BusinessException.class, () -> userService.saveUser(user));
+
+        // THEN
+        assertEquals("La fecha de nacimiento no puede estar en el futuro.", exception.getMessage());
+    }
+
+    @Test
+    void saveUser_givenAgeOverOneHundred_whenSaved_thenThrowsBusinessException() {
+        // GIVEN
+        UserEntity user = buildUser(1L, 0, "No frecuente");
+        user.setRut("11111111-1");
+        user.setDateBirthday(LocalDate.now().minusYears(101));
+
+        // WHEN
+        BusinessException exception = assertThrows(BusinessException.class, () -> userService.saveUser(user));
+
+        // THEN
+        assertEquals("No se permiten usuarios con mas de 100 anos.", exception.getMessage());
+    }
+
+    @Test
+    void saveUser_givenValidRutWithFormatting_whenSaved_thenNormalizesAndPersists() {
+        // GIVEN
+        UserEntity user = buildUser(1L, 0, "No frecuente");
+        user.setRut("11.111.111-1");
+        user.setDateBirthday(LocalDate.of(1992, 5, 10));
+        when(userRepository.findByRut("111111111")).thenReturn(Optional.empty());
+        when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // WHEN
+        UserEntity saved = userService.saveUser(user);
+
+        // THEN
+        assertEquals("111111111", saved.getRut());
+        assertEquals(LocalDate.of(1992, 5, 10), saved.getDateBirthday());
+        verify(userRepository).save(any(UserEntity.class));
+    }
+
+    @Test
+    void isValidRut_givenVerifierK_whenChecked_thenReturnsTrue() {
+        assertTrue(userService.isValidRut("12.426.095-7"));
+    }
+
     private UserEntity buildUser(Long id, Integer visits, String category) {
         UserEntity user = new UserEntity();
         user.setId(id);
@@ -172,6 +240,7 @@ class UserServiceTest {
         user.setName("Usuario");
         user.setNumberVisits(visits);
         user.setCategory_frecuency(category);
+        user.setDateBirthday(LocalDate.of(1990, 1, 1));
         return user;
     }
 }

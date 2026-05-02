@@ -7,9 +7,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -18,6 +18,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+import java.util.Locale;
 
 @Configuration
 @EnableMethodSecurity
@@ -27,6 +28,8 @@ public class SecurityConfig {
     @Bean
     @ConditionalOnProperty(name = "app.security.enabled", havingValue = "true", matchIfMissing = true)
     SecurityFilterChain securedFilterChain(HttpSecurity http, SecurityProperties securityProperties) throws Exception {
+        String adminAuthority = toRoleAuthority(securityProperties.getAdminRole());
+
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
@@ -34,14 +37,21 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/error", "/actuator/health/**", "/actuator/info").permitAll()
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/rooms/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/tourist-packages/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/reservations", "/api/v1/reservations/confirmar").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/users/findByRut/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/users/*").permitAll()
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/findByRut/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/users/*").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/reservations", "/api/v1/reservations/confirmar").authenticated()
+                        .requestMatchers("/api/v1/payments/**").authenticated()
+                        .requestMatchers("/api/v1/auth/me").authenticated()
+                        .requestMatchers("/api/v1/reservations/**").hasAuthority(adminAuthority)
+                        .requestMatchers("/api/v1/reservation-details/**").hasAuthority(adminAuthority)
+                        .requestMatchers("/api/v1/rooms/**").hasAuthority(adminAuthority)
+                        .requestMatchers("/api/v1/tourist-packages/**").hasAuthority(adminAuthority)
+                        .requestMatchers("/api/v1/users/**").hasAuthority(adminAuthority)
+                        .anyRequest().denyAll()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter(securityProperties))))
                 .build();
@@ -77,5 +87,9 @@ public class SecurityConfig {
                 new KeycloakJwtRolesConverter(securityProperties.getKeycloak().getClientId())
         );
         return converter;
+    }
+
+    private String toRoleAuthority(String role) {
+        return "ROLE_" + role.replace('-', '_').toUpperCase(Locale.ROOT);
     }
 }

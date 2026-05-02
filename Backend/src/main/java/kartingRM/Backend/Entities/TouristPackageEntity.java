@@ -58,6 +58,15 @@ public class TouristPackageEntity {
     @Column(nullable = false, length = 30)
     private String roomType;
 
+    @Column(length = 40)
+    private String travelType;
+
+    @Column(length = 40)
+    private String season;
+
+    @Column(length = 40)
+    private String category;
+
     @Column(nullable = false)
     private Boolean transferIncluded;
 
@@ -82,4 +91,12 @@ public class TouristPackageEntity {
     private LocalDate availableFrom;
 
     private LocalDate availableUntil;
+
+    private Boolean promotionActive = Boolean.FALSE;
+
+    private Double promotionDiscountPercent = 0.0;
+
+    private LocalDate promotionStartDate;
+
+    private LocalDate promotionEndDate;
 }

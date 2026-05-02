@@ -15,6 +15,26 @@
       }
     ]
   },
+  "users": [
+    {
+      "username": "hotelrm-admin",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "HotelRM",
+      "lastName": "Admin",
+      "email": "admin@hotelrm.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "changeit",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "hotelrm_admin"
+      ]
+    }
+  ],
   "clients": [
     {
       "clientId": "hotelrm-frontend",
@@ -22,7 +42,7 @@
       "enabled": true,
       "publicClient": true,
       "standardFlowEnabled": true,
-      "directAccessGrantsEnabled": false,
+      "directAccessGrantsEnabled": true,
       "implicitFlowEnabled": false,
       "serviceAccountsEnabled": false,
       "protocol": "openid-connect",
@@ -31,10 +51,12 @@
       },
       "redirectUris": [
         "http://localhost:3000/*",
+        "http://localhost:3001/*",
         "http://localhost:5173/*"
       ],
       "webOrigins": [
         "http://localhost:3000",
+        "http://localhost:3001",
         "http://localhost:5173",
         "+"
       ],

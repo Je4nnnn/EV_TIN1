@@ -18,7 +18,7 @@ import {
 import CalendarHome from '../../components/CalendarHome'
 import TablePrices from '../../components/TablePrices'
 import { useNavigate } from 'react-router-dom'
-import { getTouristPackages } from '../../services/TouristPackageService'
+import { searchTouristPackages } from '../../services/TouristPackageService'
 import { getAvailableRooms } from '../../services/RoomsService'
 
 const STAY_TYPES = [
@@ -40,6 +40,9 @@ const Home = () => {
   const [stayType, setStayType] = useState('')
   const [roomType, setRoomType] = useState('')
   const [touristPackages, setTouristPackages] = useState([])
+  const [destinationFilter, setDestinationFilter] = useState('')
+  const [maxPriceFilter, setMaxPriceFilter] = useState('')
+  const [travelTypeFilter, setTravelTypeFilter] = useState('')
   const [selectedPackageId, setSelectedPackageId] = useState('')
   const [availableRooms, setAvailableRooms] = useState([])
   const [selectedRoomId, setSelectedRoomId] = useState('')
@@ -50,7 +53,11 @@ const Home = () => {
   useEffect(() => {
     const fetchPackages = async () => {
       try {
-        const data = await getTouristPackages(true)
+        const data = await searchTouristPackages({
+          destination: destinationFilter,
+          maxPrice: maxPriceFilter,
+          travelType: travelTypeFilter,
+        })
         setTouristPackages(data)
       } catch (error) {
         setFeedback({ type: 'error', message: error.message })
@@ -58,7 +65,7 @@ const Home = () => {
     }
 
     fetchPackages()
-  }, [])
+  }, [destinationFilter, maxPriceFilter, travelTypeFilter])
 
   useEffect(() => {
     if (reservationMode !== 'manual') {
@@ -73,7 +80,7 @@ const Home = () => {
     const checkout = checkInDate.add(selectedStayType?.checkoutDays || 0, 'day')
     setCheckOutDate(checkout)
     verifyConflict()
-  }, [checkInDate, stayType])
+  }, [checkInDate, stayType, reservationMode])
 
   useEffect(() => {
     if (reservationMode !== 'package' || !selectedPackageId) {
@@ -143,7 +150,7 @@ const Home = () => {
     }
 
     loadAvailableRooms()
-  }, [checkInDate, checkOutDate, roomType, stayType])
+  }, [checkInDate, checkOutDate, roomType, stayType, selectedRoomId])
 
   const handleCheckOutChange = (event) => {
     const newDate = dayjs(event.target.value)
@@ -214,10 +221,10 @@ const Home = () => {
     <Stack spacing={3}>
       <Box>
         <Typography variant="h3" gutterBottom>
-          Gestion de reservas hoteleras
+          TravelAgency
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Selecciona fechas, revisa precios y valida disponibilidad antes de registrar la reserva.
+          Busca paquetes turisticos, revisa disponibilidad y registra reservas en linea.
         </Typography>
       </Box>
 
@@ -271,19 +278,48 @@ const Home = () => {
                   </>
                 ) : (
                   <>
-                    <TextField
-                      select
-                      label="Paquete turistico"
-                      value={selectedPackageId}
-                      onChange={(event) => setSelectedPackageId(event.target.value)}
-                      fullWidth
-                    >
-                      {touristPackages.map((touristPackage) => (
-                        <MenuItem key={touristPackage.id} value={touristPackage.id}>
-                          {touristPackage.packageName}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={5}>
+                        <TextField
+                          label="Destino"
+                          value={destinationFilter}
+                          onChange={(event) => setDestinationFilter(event.target.value)}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          type="number"
+                          label="Precio maximo"
+                          value={maxPriceFilter}
+                          onChange={(event) => setMaxPriceFilter(event.target.value)}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <TextField
+                          label="Tipo"
+                          value={travelTypeFilter}
+                          onChange={(event) => setTravelTypeFilter(event.target.value)}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          select
+                          label="Paquete turistico"
+                          value={selectedPackageId}
+                          onChange={(event) => setSelectedPackageId(event.target.value)}
+                          fullWidth
+                        >
+                          {touristPackages.map((touristPackage) => (
+                            <MenuItem key={touristPackage.id} value={touristPackage.id}>
+                              {touristPackage.packageName}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+                    </Grid>
                     {selectedPackageId ? (
                       <Card variant="outlined" sx={{ borderColor: 'rgba(15, 118, 110, 0.24)' }}>
                         <CardContent>

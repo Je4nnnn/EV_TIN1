@@ -27,8 +27,14 @@ public class UserEntity {
     private String rut; // Tiene que ser unico ya que del rut se va a sacar el id del cliente.
 
     private String name;
+    @Column(unique = true)
     private String email;
     private String phoneNumber;
+    private String documentId;
+    private String nationality;
+    private String role = "CLIENT";
+    private Boolean active = Boolean.TRUE;
+    private Integer failedLoginAttempts = 0;
 
     // Fecha de nacimiento del usuario
     private LocalDate dateBirthday;

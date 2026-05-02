@@ -55,7 +55,7 @@ public class RoomController {
     }
 
     @PostMapping
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ResponseEntity<RoomEntity> addRoom(@RequestBody RoomEntity room) {
         return ResponseEntity.ok(roomService.saveRoom(room));
     }

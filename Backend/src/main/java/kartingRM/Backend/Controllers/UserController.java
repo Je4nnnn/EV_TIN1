@@ -26,13 +26,13 @@ public class UserController {
     private UserService userService;
 
     @GetMapping
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ResponseEntity<List<UserEntity>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ResponseEntity<UserEntity> getUserById(@PathVariable("id") long id) {
         return ResponseEntity.ok(userService.findUserById(id));
     }
@@ -52,13 +52,13 @@ public class UserController {
     }
 
     @PutMapping("/{id}/update-category")
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ResponseEntity<UserEntity> updateCategoryFrequency(@PathVariable("id") Long userId) {
         return ResponseEntity.ok(userService.updateCategoryFrequency(userId));
     }
 
     @PutMapping("/{id}/update-visits")
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ResponseEntity<UserEntity> updateNumberVisits(
             @PathVariable("id") Long userId,
             @RequestParam("visits") int newVisits
@@ -67,7 +67,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}/increment-visits")
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ResponseEntity<UserEntity> incrementVisitsAndUpdateCategory(@PathVariable("id") Long userId) {
         return ResponseEntity.ok(userService.incrementVisitsAndUpdateCategory(userId));
     }

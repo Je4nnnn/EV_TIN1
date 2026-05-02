@@ -14,21 +14,76 @@ import {
   Typography,
 } from '@mui/material'
 import { confirmReserve, processParticipants } from '../../services/ReservationService'
+import { useAuth } from '../../auth/useAuth'
 
 const initialGuest = { nombre: '', rut: '', fechaCumpleanos: '', email: '', telefono: '' }
+const MAX_REASONABLE_AGE = 100
+const MIN_BOOKING_AGE = 18
+const EMAIL_REGEX = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i
+const PHONE_REGEX = /^\+?[0-9 ]{8,15}$/
 
 const guestFields = [
   { key: 'nombre', label: 'Nombre completo', required: true },
   { key: 'rut', label: 'RUT', required: true },
-  { key: 'fechaCumpleanos', label: 'Fecha de nacimiento', type: 'date' },
-  { key: 'email', label: 'Correo electronico', type: 'email' },
+  { key: 'fechaCumpleanos', label: 'Fecha de nacimiento', type: 'date', required: true },
+  { key: 'email', label: 'Correo electronico', type: 'email', required: true },
   { key: 'telefono', label: 'Telefono' },
 ]
+
+const cleanRut = (rut) => (rut ? rut.replace(/[.-]/g, '').trim().toUpperCase() : '')
+
+const isValidRut = (rut) => {
+  const normalizedRut = cleanRut(rut)
+  if (normalizedRut.length < 2) {
+    return false
+  }
+
+  const numberPart = normalizedRut.slice(0, -1)
+  const verifier = normalizedRut.slice(-1)
+  if (!/^\d+$/.test(numberPart)) {
+    return false
+  }
+
+  let sum = 0
+  let multiplier = 2
+
+  for (let index = numberPart.length - 1; index >= 0; index -= 1) {
+    sum += Number(numberPart[index]) * multiplier
+    multiplier = multiplier === 7 ? 2 : multiplier + 1
+  }
+
+  const remainder = 11 - (sum % 11)
+  const expectedVerifier = remainder === 11 ? '0' : remainder === 10 ? 'K' : String(remainder)
+  return expectedVerifier === verifier
+}
+
+const calculateAgeOnDate = (birthDate, referenceDate) => {
+  if (!birthDate || !referenceDate) {
+    return null
+  }
+
+  const birth = new Date(`${birthDate}T00:00:00`)
+  const reference = new Date(`${referenceDate}T00:00:00`)
+  if (Number.isNaN(birth.getTime()) || Number.isNaN(reference.getTime())) {
+    return null
+  }
+
+  let age = reference.getFullYear() - birth.getFullYear()
+  const monthDifference = reference.getMonth() - birth.getMonth()
+  const dayDifference = reference.getDate() - birth.getDate()
+
+  if (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0)) {
+    age -= 1
+  }
+
+  return age
+}
 
 const Formulario = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const { dia, diaSalida, tipoDuracion, tipoEstancia, paqueteTuristico, roomId, roomNumber } = location.state || {}
+  const auth = useAuth()
 
   const [cantidadPersonas, setCantidadPersonas] = useState(1)
   const [personas, setPersonas] = useState([initialGuest])
@@ -65,10 +120,56 @@ const Formulario = () => {
       return 'Faltan datos base de la reserva. Debes volver al inicio y seleccionar la estadia.'
     }
 
+    const seenRuts = new Set()
+
     for (let index = 0; index < personas.length; index += 1) {
       const persona = personas[index]
-      if (!persona.nombre.trim() || !persona.rut.trim()) {
-        return `Completa nombre y RUT del huesped ${index + 1}.`
+      const normalizedRut = cleanRut(persona.rut)
+
+      if (!persona.nombre.trim() || !persona.rut.trim() || !persona.fechaCumpleanos) {
+        return `Completa nombre, RUT y fecha de nacimiento del huesped ${index + 1}.`
+      }
+
+      if (persona.nombre.trim().length < 3) {
+        return `El nombre del huesped ${index + 1} debe tener al menos 3 caracteres.`
+      }
+
+      if (!isValidRut(normalizedRut)) {
+        return `El RUT del huesped ${index + 1} no es valido.`
+      }
+
+      if (seenRuts.has(normalizedRut)) {
+        return 'No puedes repetir el mismo RUT dentro de una reserva.'
+      }
+      seenRuts.add(normalizedRut)
+
+      if (!persona.email?.trim()) {
+        return `El correo del huesped ${index + 1} es obligatorio.`
+      }
+
+      if (!EMAIL_REGEX.test(persona.email.trim())) {
+        return `El correo del huesped ${index + 1} no es valido.`
+      }
+
+      if (persona.telefono?.trim() && !PHONE_REGEX.test(persona.telefono.trim())) {
+        return `El telefono del huesped ${index + 1} no es valido.`
+      }
+
+      const ageAtCheckIn = calculateAgeOnDate(persona.fechaCumpleanos, dia)
+      if (ageAtCheckIn === null) {
+        return `La fecha de nacimiento del huesped ${index + 1} no es valida.`
+      }
+
+      if (ageAtCheckIn < 0) {
+        return `La fecha de nacimiento del huesped ${index + 1} no puede ser posterior al check-in.`
+      }
+
+      if (ageAtCheckIn > MAX_REASONABLE_AGE) {
+        return `No se permiten huespedes mayores de ${MAX_REASONABLE_AGE} anos.`
+      }
+
+      if (index === 0 && ageAtCheckIn < MIN_BOOKING_AGE) {
+        return 'El huesped principal debe ser mayor de edad para realizar la reserva.'
       }
     }
 
@@ -77,6 +178,11 @@ const Formulario = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+
+    if (auth.enabled && !auth.authenticated) {
+      setFeedback({ type: 'error', message: 'Debes iniciar sesion para registrar una reserva.' })
+      return
+    }
 
     const validationMessage = validateForm()
     if (validationMessage) {
@@ -106,9 +212,9 @@ const Formulario = () => {
         })),
       }
 
-      await confirmReserve(reservePayload)
-      setFeedback({ type: 'success', message: 'Reserva confirmada correctamente.' })
-      setTimeout(() => navigate('/'), 1200)
+      const reservation = await confirmReserve(reservePayload)
+      setFeedback({ type: 'success', message: 'Reserva creada. Continua con el pago simulado.' })
+      setTimeout(() => navigate('/payment', { state: { reservation } }), 900)
     } catch (error) {
       setFeedback({ type: 'error', message: error.message })
     } finally {
@@ -123,7 +229,7 @@ const Formulario = () => {
           Confirmacion de reserva
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Completa los datos del huesped principal y acompanantes. El backend valida la informacion final.
+          Completa los datos del cliente y acompanantes. La reserva quedara pendiente hasta pagar el monto total.
         </Typography>
       </Box>
 
@@ -168,6 +274,12 @@ const Formulario = () => {
                     <Typography variant="body2">
                       Servicios extra: {paqueteTuristico.extraServices?.join(', ') || 'Sin extras'}
                     </Typography>
+                    <Typography variant="body2">
+                      Precio original estimado: ${Number((paqueteTuristico.price || 0) * cantidadPersonas).toLocaleString('es-CL')}
+                    </Typography>
+                    <Typography variant="body2">
+                      Descuento estimado por grupo: {cantidadPersonas >= 4 ? '10%' : '0%'}
+                    </Typography>
                   </Stack>
                 </CardContent>
               </Card>
@@ -196,6 +308,11 @@ const Formulario = () => {
                 <CardContent>
                   <Stack spacing={2}>
                     <Typography variant="h6">Huesped {index + 1}</Typography>
+                    {index === 0 ? (
+                      <Typography variant="body2" color="text.secondary">
+                        Este huesped se registra como titular de la reserva y debe ser mayor de edad.
+                      </Typography>
+                    ) : null}
                     <Grid container spacing={2}>
                       {guestFields.map((field) => (
                         <Grid item xs={12} md={field.key === 'nombre' ? 6 : 3} key={field.key}>
@@ -207,6 +324,7 @@ const Formulario = () => {
                             required={Boolean(field.required)}
                             fullWidth
                             InputLabelProps={field.type === 'date' ? { shrink: true } : undefined}
+                            inputProps={field.type === 'date' ? { max: dia || diaSalida || undefined } : undefined}
                           />
                         </Grid>
                       ))}

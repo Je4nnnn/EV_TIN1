@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @RestController
 @RequestMapping("/api/v1/tourist-packages")
@@ -43,14 +45,37 @@ public class TouristPackageController {
         return ResponseEntity.ok(touristPackageService.getPackageById(id));
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<TouristPackageEntity>> searchPackages(
+            @RequestParam(required = false) String destination,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) Integer minDays,
+            @RequestParam(required = false) Integer maxDays,
+            @RequestParam(required = false) String travelType
+    ) {
+        return ResponseEntity.ok(touristPackageService.searchAvailablePackages(
+                destination,
+                startDate,
+                endDate,
+                minPrice,
+                maxPrice,
+                minDays,
+                maxDays,
+                travelType
+        ));
+    }
+
     @PostMapping
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ResponseEntity<TouristPackageEntity> createPackage(@RequestBody TouristPackageEntity touristPackage) {
         return ResponseEntity.ok(touristPackageService.createPackage(touristPackage));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ResponseEntity<TouristPackageEntity> updatePackage(
             @PathVariable Long id,
             @RequestBody TouristPackageEntity touristPackage
@@ -59,7 +84,7 @@ public class TouristPackageController {
     }
 
     @PatchMapping("/{id}/availability")
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ResponseEntity<TouristPackageEntity> updateAvailability(
             @PathVariable Long id,
             @RequestParam("available") boolean available
@@ -68,7 +93,7 @@ public class TouristPackageController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ResponseEntity<ApiMessageResponse> deletePackage(@PathVariable Long id) {
         touristPackageService.deletePackage(id);
         return ResponseEntity.ok(new ApiMessageResponse("Paquete turistico eliminado correctamente."));

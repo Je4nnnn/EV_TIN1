@@ -12,4 +12,5 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
     List<ReservationEntity> findByRoomIdAndCancelledFalse(Long roomId);
     List<ReservationEntity> findByRoomIdInAndCancelledFalse(List<Long> roomIds);
     List<ReservationEntity> findByClienteRutIgnoreCaseAndCancelledFalse(String rut);
+    boolean existsByTouristPackageIdAndCancelledFalse(Long touristPackageId);
 }

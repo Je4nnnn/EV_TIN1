@@ -3,6 +3,7 @@ package kartingRM.Backend.services;
 import kartingRM.Backend.Entities.TouristPackageEntity;
 import kartingRM.Backend.Exceptions.BusinessException;
 import kartingRM.Backend.Exceptions.ResourceNotFoundException;
+import kartingRM.Backend.Repositories.ReservationRepository;
 import kartingRM.Backend.Repositories.TouristPackageRepository;
 import kartingRM.Backend.Services.TouristPackageService;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,6 +30,9 @@ class TouristPackageServiceTest {
 
     @Mock
     private TouristPackageRepository touristPackageRepository;
+
+    @Mock
+    private ReservationRepository reservationRepository;
 
     @InjectMocks
     private TouristPackageService touristPackageService;
@@ -87,8 +93,8 @@ class TouristPackageServiceTest {
     void createPackage_givenInvalidAvailabilityWindow_whenCreated_thenThrowsBusinessException() {
         // GIVEN
         TouristPackageEntity touristPackage = buildPackage();
-        touristPackage.setAvailableFrom(LocalDate.of(2026, 4, 20));
-        touristPackage.setAvailableUntil(LocalDate.of(2026, 4, 19));
+        touristPackage.setAvailableFrom(LocalDate.now().plusDays(20));
+        touristPackage.setAvailableUntil(LocalDate.now().plusDays(19));
 
         // WHEN
         BusinessException exception = assertThrows(BusinessException.class, () -> touristPackageService.createPackage(touristPackage));
@@ -390,6 +396,216 @@ class TouristPackageServiceTest {
         assertEquals("Paquete turistico no encontrado con ID: 999", exception.getMessage());
     }
 
+    @Test
+    void searchAvailablePackages_givenFilters_thenReturnsOnlyMatchingPackages() {
+        TouristPackageEntity matching = buildPackage();
+        matching.setPackageName("Atacama premium");
+        matching.setDestinations(List.of("San Pedro de Atacama"));
+        matching.setPrice(250000.0);
+        matching.setDaysCount(3);
+        matching.setTravelType("AVENTURA");
+        TouristPackageEntity expensive = buildPackage();
+        expensive.setPackageName("Europa");
+        expensive.setDestinations(List.of("Madrid"));
+        expensive.setPrice(2000000.0);
+        expensive.setTravelType("CULTURAL");
+
+        when(touristPackageRepository.findByAvailableTrueOrderByPackageNameAsc()).thenReturn(List.of(matching, expensive));
+
+        List<TouristPackageEntity> result = touristPackageService.searchAvailablePackages(
+                "Atacama",
+                LocalDate.now(),
+                LocalDate.now().plusDays(30),
+                100000.0,
+                400000.0,
+                2,
+                5,
+                "AVENTURA"
+        );
+
+        assertEquals(1, result.size());
+        assertEquals("Atacama premium", result.get(0).getPackageName());
+    }
+
+    @Test
+    void createPackage_givenActivePromotionWithoutDates_thenRejects() {
+        TouristPackageEntity touristPackage = buildPackage();
+        touristPackage.setPromotionActive(true);
+        touristPackage.setPromotionDiscountPercent(10.0);
+
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> touristPackageService.createPackage(touristPackage));
+
+        assertEquals("La promocion debe tener fecha de inicio y termino.", exception.getMessage());
+    }
+
+    @Test
+    void deletePackage_givenAssociatedReservations_thenCancelsInsteadOfDeleting() {
+        TouristPackageEntity touristPackage = buildPackage();
+        touristPackage.setId(50L);
+        when(touristPackageRepository.findById(50L)).thenReturn(Optional.of(touristPackage));
+        when(reservationRepository.existsByTouristPackageIdAndCancelledFalse(50L)).thenReturn(true);
+        when(touristPackageRepository.save(any(TouristPackageEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        touristPackageService.deletePackage(50L);
+
+        assertFalse(touristPackage.getAvailable());
+        assertEquals("CANCELLED", touristPackage.getStatus());
+        verify(touristPackageRepository).save(touristPackage);
+    }
+
+    @Test
+    void getAllPackages_givenNullOptionalFields_thenNormalizesForRead() {
+        TouristPackageEntity touristPackage = buildPackage();
+        touristPackage.setDestinations(null);
+        touristPackage.setActivities(null);
+        touristPackage.setExtraServices(null);
+        touristPackage.setAvailable(null);
+        touristPackage.setTransferIncluded(null);
+        touristPackage.setAutomobileServiceIncluded(null);
+        touristPackage.setStatus(null);
+        touristPackage.setTravelType(null);
+        touristPackage.setSeason(null);
+        touristPackage.setCategory(null);
+        touristPackage.setPromotionActive(null);
+        touristPackage.setPromotionDiscountPercent(null);
+        when(touristPackageRepository.findAll()).thenReturn(List.of(touristPackage));
+
+        List<TouristPackageEntity> result = touristPackageService.getAllPackages();
+
+        TouristPackageEntity normalized = result.get(0);
+        assertEquals(List.of(), normalized.getDestinations());
+        assertFalse(normalized.getAvailable());
+        assertEquals("UNAVAILABLE", normalized.getStatus());
+        assertEquals("GENERAL", normalized.getTravelType());
+        assertEquals("REGULAR", normalized.getSeason());
+        assertEquals("STANDARD", normalized.getCategory());
+        assertFalse(normalized.getPromotionActive());
+        assertEquals(0.0, normalized.getPromotionDiscountPercent());
+    }
+
+    @Test
+    void getAvailablePackages_givenExpiredOrUnavailableRows_thenReturnsOnlyPublicBookableRows() {
+        TouristPackageEntity active = buildPackage();
+        active.setPackageName("Active");
+        TouristPackageEntity expired = buildPackage();
+        expired.setPackageName("Expired");
+        expired.setAvailableUntil(LocalDate.now().minusDays(1));
+        when(touristPackageRepository.findByAvailableTrueOrderByPackageNameAsc()).thenReturn(List.of(active, expired));
+
+        List<TouristPackageEntity> result = touristPackageService.getAvailablePackages();
+
+        assertEquals(1, result.size());
+        assertEquals("Active", result.get(0).getPackageName());
+    }
+
+    @Test
+    void reservePackageSlots_givenInvalidRequestedSlots_thenRejects() {
+        TouristPackageEntity touristPackage = buildPackage();
+        touristPackage.setId(60L);
+        when(touristPackageRepository.findById(60L)).thenReturn(Optional.of(touristPackage));
+
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> touristPackageService.reservePackageSlots(60L, 0));
+
+        assertEquals("La cantidad de cupos solicitada debe ser mayor a cero.", exception.getMessage());
+    }
+
+    @Test
+    void reservePackageSlots_givenRequestedSlotsAboveAvailability_thenRejects() {
+        TouristPackageEntity touristPackage = buildPackage();
+        touristPackage.setId(61L);
+        touristPackage.setAvailableSlots(2);
+        when(touristPackageRepository.findById(61L)).thenReturn(Optional.of(touristPackage));
+
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> touristPackageService.reservePackageSlots(61L, 3));
+
+        assertEquals("La cantidad solicitada excede los cupos disponibles del paquete.", exception.getMessage());
+    }
+
+    @Test
+    void reservePackageSlots_givenExpiredPackage_thenRejectsAsNotCurrent() {
+        TouristPackageEntity touristPackage = buildPackage();
+        touristPackage.setId(62L);
+        touristPackage.setAvailableFrom(LocalDate.now().minusDays(5));
+        touristPackage.setAvailableUntil(LocalDate.now().minusDays(1));
+        when(touristPackageRepository.findById(62L)).thenReturn(Optional.of(touristPackage));
+
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> touristPackageService.reservePackageSlots(62L, 1));
+
+        assertEquals("El paquete turistico no se encuentra vigente para clientes.", exception.getMessage());
+    }
+
+    @Test
+    void updatePackage_givenPayload_thenCopiesNewFieldsAndNormalizes() {
+        TouristPackageEntity existing = buildPackage();
+        existing.setId(70L);
+        TouristPackageEntity payload = buildPackage();
+        payload.setPackageName("  Norte cultural ");
+        payload.setDescription("Nueva descripcion");
+        payload.setTravelType(" cultural ");
+        payload.setSeason(" alta ");
+        payload.setCategory(" premium ");
+        payload.setPromotionActive(true);
+        payload.setPromotionDiscountPercent(15.0);
+        payload.setPromotionStartDate(LocalDate.now().minusDays(1));
+        payload.setPromotionEndDate(LocalDate.now().plusDays(1));
+
+        when(touristPackageRepository.findById(70L)).thenReturn(Optional.of(existing));
+        when(touristPackageRepository.save(any(TouristPackageEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        TouristPackageEntity updated = touristPackageService.updatePackage(70L, payload);
+
+        assertEquals("Norte cultural", updated.getPackageName());
+        assertEquals("CULTURAL", updated.getTravelType());
+        assertEquals("ALTA", updated.getSeason());
+        assertEquals("PREMIUM", updated.getCategory());
+        assertTrue(updated.getPromotionActive());
+        assertEquals(15.0, updated.getPromotionDiscountPercent());
+    }
+
+    @Test
+    void updateAvailability_givenFalse_thenStoresUnavailableState() {
+        TouristPackageEntity touristPackage = buildPackage();
+        touristPackage.setId(71L);
+        when(touristPackageRepository.findById(71L)).thenReturn(Optional.of(touristPackage));
+        when(touristPackageRepository.save(any(TouristPackageEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        TouristPackageEntity updated = touristPackageService.updateAvailability(71L, false);
+
+        assertFalse(updated.getAvailable());
+        assertEquals("UNAVAILABLE", updated.getStatus());
+    }
+
+    @Test
+    void deletePackage_givenNoAssociatedReservations_thenDeletesPhysically() {
+        TouristPackageEntity touristPackage = buildPackage();
+        touristPackage.setId(72L);
+        when(touristPackageRepository.findById(72L)).thenReturn(Optional.of(touristPackage));
+        when(reservationRepository.existsByTouristPackageIdAndCancelledFalse(72L)).thenReturn(false);
+
+        touristPackageService.deletePackage(72L);
+
+        verify(touristPackageRepository).delete(touristPackage);
+        verify(touristPackageRepository, never()).save(touristPackage);
+    }
+
+    @Test
+    void createPackage_givenPromotionEndBeforeStart_thenRejects() {
+        TouristPackageEntity touristPackage = buildPackage();
+        touristPackage.setPromotionActive(true);
+        touristPackage.setPromotionDiscountPercent(10.0);
+        touristPackage.setPromotionStartDate(LocalDate.now().plusDays(2));
+        touristPackage.setPromotionEndDate(LocalDate.now().plusDays(1));
+
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> touristPackageService.createPackage(touristPackage));
+
+        assertEquals("La fecha termino de promocion no puede ser anterior a la fecha inicio.", exception.getMessage());
+    }
+
     private TouristPackageEntity buildPackage() {
         TouristPackageEntity touristPackage = new TouristPackageEntity();
         touristPackage.setPackageName("Aventura");
@@ -407,8 +623,8 @@ class TouristPackageServiceTest {
         touristPackage.setStatus("AVAILABLE");
         touristPackage.setAvailable(true);
         touristPackage.setMaxGuests(4);
-        touristPackage.setAvailableFrom(LocalDate.of(2026, 4, 20));
-        touristPackage.setAvailableUntil(LocalDate.of(2026, 4, 23));
+        touristPackage.setAvailableFrom(LocalDate.now().plusDays(20));
+        touristPackage.setAvailableUntil(LocalDate.now().plusDays(23));
         return touristPackage;
     }
 }

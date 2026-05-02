@@ -1,6 +1,8 @@
 package kartingRM.Backend.Controllers;
 
 import kartingRM.Backend.DTOs.ApiMessageResponse;
+import kartingRM.Backend.DTOs.PackageRankingRow;
+import kartingRM.Backend.DTOs.SalesReportRow;
 import kartingRM.Backend.Entities.ReservationEntity;
 import kartingRM.Backend.Services.ReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,29 +33,31 @@ public class ReservationController {
     private ReservationService reservationService;
 
     @GetMapping
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ResponseEntity<List<ReservationEntity>> getAllReservations() {
         return ResponseEntity.ok(reservationService.getAllReservations());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ResponseEntity<ReservationEntity> getReservationById(@PathVariable("id") Long id) {
         return ResponseEntity.ok(reservationService.getReservationById(id));
     }
 
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ReservationEntity> addReservation(@RequestBody ReservationEntity reserve) {
         return ResponseEntity.ok(reservationService.saveReservation(reserve));
     }
 
     @PostMapping("/confirmar")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ReservationEntity> confirmarReserva(@RequestBody ReservationEntity reserve) {
         return ResponseEntity.ok(reservationService.saveReservation(reserve));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ResponseEntity<ReservationEntity> updateReservation(
             @PathVariable("id") Long id,
             @RequestBody ReservationEntity reserve
@@ -62,14 +66,14 @@ public class ReservationController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ResponseEntity<ApiMessageResponse> deleteReservation(@PathVariable("id") Long id) {
         reservationService.deleteReservation(id);
         return ResponseEntity.ok(new ApiMessageResponse("Reserva eliminada correctamente."));
     }
 
     @GetMapping("/reports/room-type")
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ResponseEntity<Map<String, Map<String, Double>>> getReportePorTipoHabitacion(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
@@ -80,7 +84,7 @@ public class ReservationController {
     }
 
     @GetMapping("/reports/guest-count")
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ResponseEntity<Map<String, Map<String, Double>>> getReportePorCantidadPersonas(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
@@ -88,5 +92,23 @@ public class ReservationController {
         return ResponseEntity.ok(
                 reservationService.getReporteIngresosPorCantidadDePersonas(fechaInicio, fechaFin)
         );
+    }
+
+    @GetMapping("/reports/sales")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
+    public ResponseEntity<List<SalesReportRow>> getSalesReport(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+    ) {
+        return ResponseEntity.ok(reservationService.getSalesReport(fechaInicio, fechaFin));
+    }
+
+    @GetMapping("/reports/package-ranking")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
+    public ResponseEntity<List<PackageRankingRow>> getPackageRankingReport(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+    ) {
+        return ResponseEntity.ok(reservationService.getPackageRankingReport(fechaInicio, fechaFin));
     }
 }

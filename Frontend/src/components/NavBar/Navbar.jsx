@@ -11,12 +11,13 @@ import {
   Typography,
 } from '@mui/material'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
-import { useAuth } from '../../auth/AuthContext'
+import { useAuth } from '../../auth/useAuth'
 
 const navigationItems = [
-  { to: '/rooms', label: 'Habitaciones' },
-  { to: '/prices', label: 'Precios' },
-  { to: '/rack', label: 'Rack semanal', requiresAdmin: true },
+  { to: '/home', label: 'Paquetes' },
+  { to: '/rooms', label: 'Alojamiento' },
+  { to: '/prices', label: 'Tarifas' },
+  { to: '/rack', label: 'Reservas', requiresAdmin: true },
   { to: '/reports', label: 'Reportes', requiresAdmin: true },
   { to: '/tourist-packages', label: 'Paquetes turisticos', requiresAdmin: true },
 ]
@@ -65,7 +66,7 @@ export const Navbar = () => {
           variant="h5"
           sx={{ fontWeight: 800, letterSpacing: 0.3 }}
         >
-          HotelRM
+          TravelAgency
         </Typography>
 
         <Stack

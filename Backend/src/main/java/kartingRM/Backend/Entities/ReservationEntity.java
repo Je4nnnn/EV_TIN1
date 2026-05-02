@@ -53,6 +53,33 @@ public class ReservationEntity {
     @Column(name = "final_amount")
     private Double finalAmount;
 
+    @Column(name = "original_amount")
+    private Double originalAmount;
+
+    @Column(name = "discount_amount")
+    private Double discountAmount;
+
+    @Column(name = "discount_percent")
+    private Double discountPercent;
+
+    @Column(name = "discount_breakdown", length = 1000)
+    private String discountBreakdown;
+
+    @Column(nullable = false, length = 30)
+    private String status = "PENDING_PAYMENT";
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
+    @Column(name = "amount_paid")
+    private Double amountPaid = 0.0;
+
     @Column(name = "room_id")
     private Long roomId;
 
@@ -64,6 +91,9 @@ public class ReservationEntity {
 
     @Column(name = "tourist_package_name")
     private String touristPackageName;
+
+    @Column(name = "tourist_package_price")
+    private Double touristPackagePrice;
 
     @Column(name = "cancelled", nullable = false)
     private Boolean cancelled = Boolean.FALSE;
@@ -83,6 +113,18 @@ public class ReservationEntity {
 
         if (this.cancelled == null) {
             this.cancelled = Boolean.FALSE;
+        }
+
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+
+        if (this.status == null || this.status.isBlank()) {
+            this.status = "PENDING_PAYMENT";
+        }
+
+        if (this.expiresAt == null && "PENDING_PAYMENT".equalsIgnoreCase(this.status)) {
+            this.expiresAt = this.createdAt.plusHours(24);
         }
     }
 

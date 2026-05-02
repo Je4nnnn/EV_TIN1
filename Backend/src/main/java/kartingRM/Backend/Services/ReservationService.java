@@ -4,6 +4,8 @@ import kartingRM.Backend.Entities.ReservationDetailsEntity;
 import kartingRM.Backend.Entities.ReservationEntity;
 import kartingRM.Backend.Entities.TouristPackageEntity;
 import kartingRM.Backend.Entities.UserEntity;
+import kartingRM.Backend.DTOs.PackageRankingRow;
+import kartingRM.Backend.DTOs.SalesReportRow;
 import kartingRM.Backend.Exceptions.BusinessException;
 import kartingRM.Backend.Exceptions.ResourceNotFoundException;
 import kartingRM.Backend.Repositories.ReservationRepository;
@@ -19,16 +21,22 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 
 @Service
 public class ReservationService {
 
     private static final int MAX_ACTIVE_RESERVATIONS_PER_RUT = 3;
+    private static final double GROUP_DISCOUNT = 0.10;
+    private static final double MULTI_PACKAGE_DISCOUNT = 0.05;
+    private static final double MAX_TOTAL_DISCOUNT = 0.20;
 
     @Autowired
     private UserService userService;
@@ -66,11 +74,12 @@ public class ReservationService {
         validateReservation(reserve);
         TouristPackageEntity selectedPackage = applyTouristPackageDataIfNeeded(reserve);
         UserEntity mainClient = resolveMainClient(reserve);
+        validateReservationPeople(reserve, mainClient);
         validateActiveReservationLimit(mainClient.getRut(), null);
         reserve.setCliente(mainClient);
-        prepareReservationForPersistence(reserve);
+        prepareReservationForPersistence(reserve, selectedPackage);
         ReservationEntity savedReserve = reservationRepository.save(reserve);
-        consumeTouristPackageSlotIfNeeded(selectedPackage);
+        consumeTouristPackageSlotIfNeeded(selectedPackage, savedReserve.getNumberOfGuests());
         updateVisitCounters(savedReserve);
         return savedReserve;
     }
@@ -108,11 +117,12 @@ public class ReservationService {
         ReservationEntity existingReserve = getReservationById(id);
         copyReservationData(existingReserve, reserve);
         validateReservation(existingReserve);
-        applyTouristPackageDataIfNeeded(existingReserve);
+        TouristPackageEntity selectedPackage = applyTouristPackageDataIfNeeded(existingReserve);
         UserEntity mainClient = resolveMainClient(existingReserve);
+        validateReservationPeople(existingReserve, mainClient);
         validateActiveReservationLimit(mainClient.getRut(), id);
         existingReserve.setCliente(mainClient);
-        prepareReservationForPersistence(existingReserve);
+        prepareReservationForPersistence(existingReserve, selectedPackage);
         return reservationRepository.save(existingReserve);
     }
 
@@ -120,11 +130,57 @@ public class ReservationService {
     public void deleteReservation(Long id) {
         ReservationEntity reservation = getReservationById(id);
         if (reservation.getTouristPackageId() != null) {
-            touristPackageService.releasePackageSlot(reservation.getTouristPackageId());
+            int slotsToRelease = reservation.getNumberOfGuests() == null ? 1 : reservation.getNumberOfGuests();
+            for (int index = 0; index < slotsToRelease; index++) {
+                touristPackageService.releasePackageSlot(reservation.getTouristPackageId());
+            }
         }
         reservation.setCancelled(true);
         reservation.setCancelledAt(LocalDateTime.now());
+        reservation.setStatus("CANCELLED");
         reservationRepository.save(reservation);
+    }
+
+    @Transactional
+    public ReservationEntity confirmReservationPayment(Long reservationId, Double paidAmount) {
+        ReservationEntity reservation = getReservationById(reservationId);
+
+        if (Boolean.TRUE.equals(reservation.getCancelled()) || "CANCELLED".equalsIgnoreCase(reservation.getStatus())) {
+            throw new BusinessException("No se puede pagar una reserva cancelada.");
+        }
+
+        if (!"PENDING_PAYMENT".equalsIgnoreCase(reservation.getStatus())) {
+            throw new BusinessException("La reserva no se encuentra pendiente de pago.");
+        }
+
+        double expectedAmount = reservation.getFinalAmount() == null ? 0.0 : reservation.getFinalAmount();
+        if (paidAmount == null || Math.abs(paidAmount - expectedAmount) > 0.01) {
+            throw new BusinessException("El pago debe corresponder al monto total de la reserva.");
+        }
+
+        reservation.setStatus("CONFIRMED");
+        reservation.setPaidAt(LocalDateTime.now());
+        reservation.setAmountPaid(paidAmount);
+        return reservationRepository.save(reservation);
+    }
+
+    @Transactional
+    public ReservationEntity expireReservation(Long reservationId) {
+        ReservationEntity reservation = getReservationById(reservationId);
+        if (!"PENDING_PAYMENT".equalsIgnoreCase(reservation.getStatus())) {
+            return reservation;
+        }
+
+        reservation.setStatus("EXPIRED");
+        reservation.setCancelled(true);
+        reservation.setCancelledAt(LocalDateTime.now());
+        if (reservation.getTouristPackageId() != null) {
+            int slotsToRelease = reservation.getNumberOfGuests() == null ? 1 : reservation.getNumberOfGuests();
+            for (int index = 0; index < slotsToRelease; index++) {
+                touristPackageService.releasePackageSlot(reservation.getTouristPackageId());
+            }
+        }
+        return reservationRepository.save(reservation);
     }
 
     public double calcularTarifaBase(String tipoHabitacion, String stayType) {
@@ -214,6 +270,43 @@ public class ReservationService {
         return reporte;
     }
 
+    @Transactional(readOnly = true)
+    public List<SalesReportRow> getSalesReport(LocalDate fechaInicio, LocalDate fechaFin) {
+        return filterReservationsBetween(fechaInicio, fechaFin).stream()
+                .filter(reservation -> !"CANCELLED".equalsIgnoreCase(reservation.getStatus()))
+                .sorted(Comparator.comparing(this::resolveOperationDate))
+                .map(reservation -> new SalesReportRow(
+                        resolveOperationDate(reservation),
+                        reservation.getCliente() != null ? reservation.getCliente().getName() : "Cliente sin nombre",
+                        reservation.getTouristPackageName() != null ? reservation.getTouristPackageName() : "Reserva sin paquete",
+                        reservation.getNumberOfGuests(),
+                        reservation.getFinalAmount(),
+                        reservation.getAmountPaid() == null ? 0.0 : reservation.getAmountPaid(),
+                        reservation.getStatus(),
+                        reservation.getCheckInDate()
+                ))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<PackageRankingRow> getPackageRankingReport(LocalDate fechaInicio, LocalDate fechaFin) {
+        Map<Long, List<ReservationEntity>> reservationsByPackage = filterReservationsBetween(fechaInicio, fechaFin).stream()
+                .filter(reservation -> reservation.getTouristPackageId() != null)
+                .filter(reservation -> !"CANCELLED".equalsIgnoreCase(reservation.getStatus()))
+                .collect(Collectors.groupingBy(
+                        ReservationEntity::getTouristPackageId,
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        return reservationsByPackage.entrySet().stream()
+                .map(entry -> buildRankingRow(entry.getKey(), entry.getValue()))
+                .sorted(Comparator.comparing(PackageRankingRow::passengerCount).reversed()
+                        .thenComparing(PackageRankingRow::reservationsCount, Comparator.reverseOrder())
+                        .thenComparing(PackageRankingRow::packageName, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
     public String getRangoPorCantidadDePersonas(int cantidadPersonas) {
         if (cantidadPersonas >= 1 && cantidadPersonas <= 2) {
             return "1-2 personas";
@@ -231,11 +324,11 @@ public class ReservationService {
     }
 
     private void validateReservation(ReservationEntity reserve) {
-        boolean reservationFromPackage = reserve.getTouristPackageId() != null;
-
         if (reserve == null) {
             throw new BusinessException("Debe enviar una reserva valida.");
         }
+
+        boolean reservationFromPackage = reserve.getTouristPackageId() != null;
 
         if (reserve.getDetails() == null || reserve.getDetails().isEmpty()) {
             throw new BusinessException("La reserva debe incluir al menos un detalle.");
@@ -247,6 +340,10 @@ public class ReservationService {
 
         if (!reservationFromPackage && reserve.getCheckOutDate().isBefore(reserve.getCheckInDate())) {
             throw new BusinessException("La fecha de check-out no puede ser anterior al check-in.");
+        }
+
+        if (!reservationFromPackage && reserve.getCheckInDate().isBefore(LocalDate.now())) {
+            throw new BusinessException("No se pueden registrar reservas con fecha de check-in en el pasado.");
         }
 
         if (!reservationFromPackage && (reserve.getStayType() == null || reserve.getStayType().isBlank())) {
@@ -281,9 +378,53 @@ public class ReservationService {
         }
     }
 
-    private void prepareReservationForPersistence(ReservationEntity reserve) {
+    private void validateReservationPeople(ReservationEntity reserve, UserEntity mainClient) {
+        if (reserve.getCheckInDate() == null) {
+            throw new BusinessException("La reserva debe incluir una fecha de check-in valida.");
+        }
+
+        if (mainClient == null || mainClient.getId() == null) {
+            throw new BusinessException("No se pudo determinar el huesped principal de la reserva.");
+        }
+
+        Set<Long> uniqueGuestIds = new HashSet<>();
+        boolean mainClientIncluded = false;
+
+        for (ReservationDetailsEntity detail : reserve.getDetails()) {
+            if (!uniqueGuestIds.add(detail.getUserId())) {
+                throw new BusinessException("No se puede repetir el mismo huesped dentro de una reserva.");
+            }
+
+            UserEntity guest = findUser(detail.getUserId());
+            if (mainClient.getId().equals(guest.getId())) {
+                mainClientIncluded = true;
+            }
+
+            userService.validateReservationGuestAge(guest, reserve.getCheckInDate(), false);
+        }
+
+        if (!mainClientIncluded) {
+            throw new BusinessException("El huesped principal debe estar incluido entre los detalles de la reserva.");
+        }
+
+        userService.validateReservationGuestAge(mainClient, reserve.getCheckInDate(), true);
+    }
+
+    private void prepareReservationForPersistence(ReservationEntity reserve, TouristPackageEntity selectedPackage) {
         if (reserve.getCancelled() == null) {
             reserve.setCancelled(Boolean.FALSE);
+        }
+
+        if (reserve.getStatus() == null || reserve.getStatus().isBlank()) {
+            reserve.setStatus("PENDING_PAYMENT");
+        }
+
+        if (reserve.getCreatedAt() == null) {
+            reserve.setCreatedAt(LocalDateTime.now());
+        }
+
+        if (reserve.getExpiresAt() == null && "PENDING_PAYMENT".equalsIgnoreCase(reserve.getStatus())) {
+            reserve.setExpiresAt(reserve.getCreatedAt().plusHours(24));
         }
 
         reserve.setNumberOfGuests(resolveGuestCount(reserve));
@@ -291,7 +432,7 @@ public class ReservationService {
         reserve.setRoomType(reserve.getRoomType().trim());
         assignSelectedRoom(reserve);
         reserve.setDetails(sortReservationDetails(reserve.getDetails()));
-        recalculateReservationAmounts(reserve);
+        recalculateReservationAmounts(reserve, selectedPackage);
     }
 
     private int resolveGuestCount(ReservationEntity reserve) {
@@ -327,13 +468,14 @@ public class ReservationService {
                 .collect(Collectors.toList());
     }
 
-    private void recalculateReservationAmounts(ReservationEntity reserve) {
+    private void recalculateReservationAmounts(ReservationEntity reserve, TouristPackageEntity selectedPackage) {
         int guestCount = reserve.getNumberOfGuests();
-        long numberOfDays = calcularNumeroDias(reserve);
-        double baseRate = calcularTarifaBase(reserve.getRoomType(), reserve.getStayType()) * numberOfDays;
+        double baseRate = resolveBaseRate(reserve);
+        DiscountCalculation discountCalculation = calculateDiscounts(reserve, selectedPackage);
         int maxBirthdayDiscounts = calcularMaxCumpleanos(guestCount);
         int appliedBirthdayDiscounts = 0;
         double totalAmount = 0.0;
+        double originalAmount = 0.0;
 
         for (ReservationDetailsEntity detail : reserve.getDetails()) {
             UserEntity user = findUser(detail.getUserId());
@@ -346,17 +488,101 @@ public class ReservationService {
                 appliedBirthdayDiscounts++;
             }
 
-            double loyaltyDiscount = userService.obtenerDescuentoPorCategoria(detail.getUserId());
-            double groupDiscount = calcularDescuentoGrupo(guestCount);
-            double finalDiscount = Math.max(birthdayDiscount, Math.max(loyaltyDiscount, groupDiscount));
+            double loyaltyDiscount = reserve.getTouristPackageId() == null
+                    ? userService.obtenerDescuentoPorCategoria(detail.getUserId())
+                    : 0.0;
+            double finalDiscount = Math.max(birthdayDiscount, Math.max(loyaltyDiscount, discountCalculation.totalDiscount()));
             double finalAmount = baseRate * (1 - finalDiscount);
 
             detail.setDiscount(finalDiscount);
             detail.setFinalAmount(finalAmount);
+            originalAmount += baseRate;
             totalAmount += finalAmount;
         }
 
+        reserve.setOriginalAmount(originalAmount);
         reserve.setFinalAmount(totalAmount);
+        reserve.setDiscountAmount(Math.max(0.0, originalAmount - totalAmount));
+        reserve.setDiscountPercent(originalAmount <= 0 ? 0.0 : reserve.getDiscountAmount() / originalAmount);
+        reserve.setDiscountBreakdown(discountCalculation.breakdown());
+    }
+
+    private double resolveBaseRate(ReservationEntity reserve) {
+        if (reserve.getTouristPackageId() != null && reserve.getTouristPackagePrice() != null) {
+            return reserve.getTouristPackagePrice();
+        }
+
+        long numberOfDays = calcularNumeroDias(reserve);
+        return calcularTarifaBase(reserve.getRoomType(), reserve.getStayType()) * numberOfDays;
+    }
+
+    private DiscountCalculation calculateDiscounts(ReservationEntity reserve, TouristPackageEntity selectedPackage) {
+        if (reserve.getTouristPackageId() == null) {
+            return new DiscountCalculation(calcularDescuentoGrupo(reserve.getNumberOfGuests()), "descuento por grupo");
+        }
+
+        Set<String> reasons = new LinkedHashSet<>();
+        double discount = 0.0;
+
+        if (reserve.getNumberOfGuests() != null && reserve.getNumberOfGuests() >= 4) {
+            discount += GROUP_DISCOUNT;
+            reasons.add("descuento por grupo");
+        }
+
+        if (reserve.getCliente() != null && reserve.getCliente().getId() != null
+                && countPaidHistoricalReservations(reserve.getCliente().getId()) >= 3) {
+            discount += Math.max(0.10, userService.obtenerDescuentoPorCategoria(reserve.getCliente().getId()));
+            reasons.add("cliente frecuente");
+        }
+
+        if (hasRecentPackagePurchase(reserve)) {
+            discount += MULTI_PACKAGE_DISCOUNT;
+            reasons.add("compra de multiples paquetes");
+        }
+
+        if (hasActivePromotion(selectedPackage, LocalDate.now())) {
+            discount += selectedPackage.getPromotionDiscountPercent() / 100.0;
+            reasons.add("promocion por tiempo limitado");
+        }
+
+        double cappedDiscount = Math.min(discount, MAX_TOTAL_DISCOUNT);
+        if (discount > cappedDiscount) {
+            reasons.add("limite maximo de descuentos");
+        }
+
+        return new DiscountCalculation(cappedDiscount, reasons.isEmpty() ? "sin descuentos aplicados" : String.join(", ", reasons));
+    }
+
+    private long countPaidHistoricalReservations(Long clientId) {
+        return reservationRepository.findAll().stream()
+                .filter(reservation -> reservation.getCliente() != null && clientId.equals(reservation.getCliente().getId()))
+                .filter(reservation -> "CONFIRMED".equalsIgnoreCase(reservation.getStatus()))
+                .count();
+    }
+
+    private boolean hasRecentPackagePurchase(ReservationEntity reserve) {
+        if (reserve.getCliente() == null || reserve.getCliente().getId() == null || reserve.getCreatedAt() == null) {
+            return false;
+        }
+
+        LocalDateTime periodStart = reserve.getCreatedAt().minusDays(30);
+        return reservationRepository.findAll().stream()
+                .filter(existing -> existing.getTouristPackageId() != null)
+                .filter(existing -> existing.getCliente() != null && reserve.getCliente().getId().equals(existing.getCliente().getId()))
+                .filter(existing -> existing.getCreatedAt() != null && !existing.getCreatedAt().isBefore(periodStart))
+                .filter(existing -> !"CANCELLED".equalsIgnoreCase(existing.getStatus()))
+                .anyMatch(existing -> existing.getId() == null || reserve.getId() == null || !existing.getId().equals(reserve.getId()));
+    }
+
+    private boolean hasActivePromotion(TouristPackageEntity touristPackage, LocalDate date) {
+        return touristPackage != null
+                && Boolean.TRUE.equals(touristPackage.getPromotionActive())
+                && touristPackage.getPromotionDiscountPercent() != null
+                && touristPackage.getPromotionDiscountPercent() > 0
+                && touristPackage.getPromotionStartDate() != null
+                && touristPackage.getPromotionEndDate() != null
+                && !date.isBefore(touristPackage.getPromotionStartDate())
+                && !date.isAfter(touristPackage.getPromotionEndDate());
     }
 
     private UserEntity findUser(Long userId) {
@@ -387,6 +613,7 @@ public class ReservationService {
         target.setCliente(source.getCliente());
         target.setTouristPackageId(source.getTouristPackageId());
         target.setTouristPackageName(source.getTouristPackageName());
+        target.setTouristPackagePrice(source.getTouristPackagePrice());
         target.getDetails().clear();
         if (source.getDetails() != null) {
             target.getDetails().addAll(source.getDetails());
@@ -404,7 +631,21 @@ public class ReservationService {
             throw new BusinessException("El paquete turistico seleccionado no tiene fechas configuradas.");
         }
 
+        int guestCount = resolveGuestCount(reserve);
+        if (!touristPackageService.isPubliclyBookable(touristPackage, LocalDate.now())) {
+            throw new BusinessException("No se puede registrar una reserva para un paquete no vigente, agotado o cancelado.");
+        }
+
+        if (touristPackage.getAvailableSlots() < guestCount) {
+            throw new BusinessException("La cantidad solicitada excede los cupos disponibles del paquete.");
+        }
+
+        if (touristPackage.getMaxGuests() != null && guestCount > touristPackage.getMaxGuests()) {
+            throw new BusinessException("La cantidad de pasajeros excede la capacidad maxima del paquete.");
+        }
+
         reserve.setTouristPackageName(touristPackage.getPackageName());
+        reserve.setTouristPackagePrice(touristPackage.getPrice());
         reserve.setCheckInDate(touristPackage.getAvailableFrom());
         reserve.setCheckOutDate(touristPackage.getAvailableUntil());
         reserve.setRoomType(touristPackage.getRoomType());
@@ -413,9 +654,9 @@ public class ReservationService {
         return touristPackage;
     }
 
-    private void consumeTouristPackageSlotIfNeeded(TouristPackageEntity touristPackage) {
+    private void consumeTouristPackageSlotIfNeeded(TouristPackageEntity touristPackage, int guestCount) {
         if (touristPackage != null) {
-            touristPackageService.reservePackageSlot(touristPackage.getId());
+            touristPackageService.reservePackageSlots(touristPackage.getId(), guestCount);
         }
     }
 
@@ -497,10 +738,44 @@ public class ReservationService {
 
         return reservationRepository.findByCancelledFalse().stream()
                 .peek(this::initializeReservation)
-                .filter(reserva -> reserva.getCheckInDate() != null)
-                .filter(reserva -> !reserva.getCheckInDate().isBefore(fechaInicio)
-                        && !reserva.getCheckInDate().isAfter(fechaFin))
+                .filter(reserva -> isReservationInsidePeriod(reserva, fechaInicio, fechaFin))
                 .collect(Collectors.toList());
+    }
+
+    private boolean isReservationInsidePeriod(ReservationEntity reservation, LocalDate fechaInicio, LocalDate fechaFin) {
+        LocalDate operationDate = resolveOperationDate(reservation).toLocalDate();
+        return !operationDate.isBefore(fechaInicio) && !operationDate.isAfter(fechaFin);
+    }
+
+    private LocalDateTime resolveOperationDate(ReservationEntity reservation) {
+        if (reservation.getPaidAt() != null) {
+            return reservation.getPaidAt();
+        }
+        if (reservation.getCreatedAt() != null) {
+            return reservation.getCreatedAt();
+        }
+        if (reservation.getCheckInDate() != null) {
+            return reservation.getCheckInDate().atStartOfDay();
+        }
+        return LocalDateTime.MIN;
+    }
+
+    private PackageRankingRow buildRankingRow(Long packageId, List<ReservationEntity> reservations) {
+        ReservationEntity sample = reservations.get(0);
+        long passengerCount = reservations.stream()
+                .mapToLong(reservation -> reservation.getNumberOfGuests() == null ? 0 : reservation.getNumberOfGuests())
+                .sum();
+        double totalAmount = reservations.stream()
+                .mapToDouble(reservation -> reservation.getFinalAmount() == null ? 0.0 : reservation.getFinalAmount())
+                .sum();
+
+        return new PackageRankingRow(
+                packageId,
+                sample.getTouristPackageName() == null ? "Paquete " + packageId : sample.getTouristPackageName(),
+                (long) reservations.size(),
+                passengerCount,
+                totalAmount
+        );
     }
 
     private void initializeReservation(ReservationEntity reservation) {
@@ -546,5 +821,8 @@ public class ReservationService {
         }
         totals.put("TOTAL", totals.values().stream().mapToDouble(Double::doubleValue).sum());
         return totals;
+    }
+
+    private record DiscountCalculation(double totalDiscount, String breakdown) {
     }
 }

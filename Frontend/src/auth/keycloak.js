@@ -30,7 +30,7 @@ export const getValidAccessToken = async () => {
 
   try {
     await keycloak.updateToken(30)
-  } catch (error) {
+  } catch {
     return keycloak.token || null
   }
 

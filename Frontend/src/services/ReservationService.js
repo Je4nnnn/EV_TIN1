@@ -115,7 +115,7 @@ export const updateUser = async (userId, userData) => {
   try {
     const response = await apiClient.put(`${USERS_API_URL}/${userId}`, userData)
     return response.data
-  } catch (error) {
+  } catch {
     return null
   }
 }

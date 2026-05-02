@@ -9,8 +9,9 @@ import Formulario from './views/Forms/Formulario'
 import Rack from './views/Rack/Rack'
 import Reports from './views/Reports/Reports'
 import TouristPackages from './views/TouristPackages/TouristPackages'
+import Payment from './views/Payment/Payment'
 import { RequireRole } from './components/auth/RequireRole'
-import { useAuth } from './auth/AuthContext'
+import { useAuth } from './auth/useAuth'
 import './App.css'
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
           <Route path="/rooms" element={<Rooms />} />
           <Route path="/prices" element={<Prices />} />
           <Route path="/formulario" element={<Formulario />} />
+          <Route path="/payment" element={<Payment />} />
           <Route
             path="/rack"
             element={

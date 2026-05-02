@@ -17,31 +17,31 @@ public class ReservationDetailsController {
     private ReservationDetailsService reservationDetailsService;
 
     @GetMapping("/")
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public List<ReservationDetailsEntity> getAllReservationDetails() {
         return reservationDetailsService.getAllReservationDetails();
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ReservationDetailsEntity getReservationDetailById(@PathVariable("id") Long id) {
         return reservationDetailsService.getReservationDetailById(id);
     }
 
     @PostMapping("/")
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ReservationDetailsEntity addReservationDetail(@RequestBody ReservationDetailsEntity reserveDetail) {
         return reservationDetailsService.saveReservationDetail(reserveDetail);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public ReservationDetailsEntity updateReservationDetail(@PathVariable("id") Long id, @RequestBody ReservationDetailsEntity updatedDetail) {
         return reservationDetailsService.updateReservationDetail(id, updatedDetail);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@authorizationRules.hasAdmin(authentication)")
+    @PreAuthorize("hasRole('HOTELRM_ADMIN')")
     public void deleteReservationDetail(@PathVariable("id") Long id) {
         reservationDetailsService.deleteReservationDetail(id);
     }
