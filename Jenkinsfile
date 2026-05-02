@@ -4,7 +4,8 @@ pipeline {
     parameters {
         booleanParam(name: 'BUILD_DOCKER_IMAGES', defaultValue: true, description: 'Construye las imagenes Docker del backend y frontend')
         booleanParam(name: 'PUSH_DOCKER_IMAGES', defaultValue: true, description: 'Sube las imagenes Docker a DockerHub')
-        string(name: 'DOCKERHUB_NAMESPACE', defaultValue: 'je4nnnn', description: 'Namespace o usuario de DockerHub')
+        string(name: 'DOCKERHUB_NAMESPACE', defaultValue: 'je4nn', description: 'Namespace o usuario de DockerHub')
+        string(name: 'DOCKERHUB_CREDENTIALS_ID', defaultValue: 'dockerhub-credentials', description: 'ID de credenciales DockerHub en Jenkins')
         string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Tag de las imagenes Docker')
     }
 
@@ -73,7 +74,7 @@ pipeline {
                 expression { return params.BUILD_DOCKER_IMAGES && params.PUSH_DOCKER_IMAGES }
             }
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_TOKEN')]) {
+                withCredentials([usernamePassword(credentialsId: params.DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_TOKEN')]) {
                     sh 'echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin'
                     sh 'docker push ${BACKEND_IMAGE}'
                     sh 'docker push ${FRONTEND_IMAGE}'

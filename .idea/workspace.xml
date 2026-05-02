@@ -5,57 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5b02bcf5-f91a-45ca-98ab-099f07d27ac8" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/.env.example" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Config/SecurityConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/AuthController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/ReservationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/ReservationController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/ReservationDetailsController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/ReservationDetailsController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/RoomController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/RoomController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/TouristPackageController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/TouristPackageController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Controllers/UserController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Entities/ReservationEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Entities/ReservationEntity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Entities/TouristPackageEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Entities/TouristPackageEntity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Entities/UserEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Entities/UserEntity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Repositories/ReservationRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Repositories/ReservationRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Repositories/UserRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Repositories/UserRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/ReservationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/ReservationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/TouristPackageService.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/TouristPackageService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/java/kartingRM/Backend/Services/UserService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/resources/application-ci.properties" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/resources/application-ci.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/resources/application-docker.properties" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/resources/application-docker.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/resources/application-local.properties" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/resources/application-local.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/test/java/kartingRM/backend/services/ReservationServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/test/java/kartingRM/backend/services/ReservationServiceTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/test/java/kartingRM/backend/services/TouristPackageServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/test/java/kartingRM/backend/services/TouristPackageServiceTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/src/test/java/kartingRM/backend/services/UserServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/src/test/java/kartingRM/backend/services/UserServiceTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/App.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/assets/react.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/auth/AuthContext.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/auth/AuthContext.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/auth/keycloak.js" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/auth/keycloak.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/components/NavBar/Navbar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/components/NavBar/Navbar.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/components/auth/RequireRole.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/components/auth/RequireRole.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/services/ReportsService.js" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/services/ReportsService.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/services/ReservationService.js" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/services/ReservationService.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/services/TouristPackageService.js" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/services/TouristPackageService.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/views/Forms/Formulario.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/views/Forms/Formulario.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/views/Home/Home.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/views/Home/Home.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/views/Reports/Reports.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/views/Reports/Reports.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/src/views/TouristPackages/TouristPackages.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/src/views/TouristPackages/TouristPackages.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/vite.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/vite.config.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/JenkinsFile" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Jenkinsfile" beforeDir="false" afterPath="$PROJECT_DIR$/Jenkinsfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker/docker-compose.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/keycloak/hotelrm-realm.json" beforeDir="false" afterPath="$PROJECT_DIR$/keycloak/hotelrm-realm.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/redesssss.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scriptbacano_BD.sql" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,7 +14,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="593" />
+    <option name="cachedIndexableFilesCount" value="619" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -127,6 +78,9 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;org.jetbrains.plugins.github.ui.GithubSettingsConfigurable&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
@@ -227,6 +181,9 @@
       <workItem from="1777403163191" duration="189000" />
       <workItem from="1777698338996" duration="47000" />
       <workItem from="1777703323841" duration="2317000" />
+      <workItem from="1777715555101" duration="88000" />
+      <workItem from="1777715781112" duration="1437000" />
+      <workItem from="1777717483505" duration="1709000" />
     </task>
     <servers />
   </component>

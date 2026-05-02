@@ -35,7 +35,7 @@ services:
       retries: 20
 
   backend1:
-    image: ${DOCKERHUB_NAMESPACE:-je4nnnn}/travelagency-backend:${IMAGE_TAG:-latest}
+    image: ${DOCKERHUB_NAMESPACE:-je4nn}/travelagency-backend:${IMAGE_TAG:-latest}
     container_name: travelagency-backend-1
     ports:
       - "${BACKEND_PORT:-8091}:8091"
@@ -68,7 +68,7 @@ services:
       start_period: 25s
 
   backend2:
-    image: ${DOCKERHUB_NAMESPACE:-je4nnnn}/travelagency-backend:${IMAGE_TAG:-latest}
+    image: ${DOCKERHUB_NAMESPACE:-je4nn}/travelagency-backend:${IMAGE_TAG:-latest}
     container_name: travelagency-backend-2
     depends_on:
       postgres:
@@ -88,7 +88,7 @@ services:
       start_period: 25s
 
   backend3:
-    image: ${DOCKERHUB_NAMESPACE:-je4nnnn}/travelagency-backend:${IMAGE_TAG:-latest}
+    image: ${DOCKERHUB_NAMESPACE:-je4nn}/travelagency-backend:${IMAGE_TAG:-latest}
     container_name: travelagency-backend-3
     depends_on:
       postgres:
@@ -108,7 +108,7 @@ services:
       start_period: 25s
 
   frontend:
-    image: ${DOCKERHUB_NAMESPACE:-je4nnnn}/travelagency-frontend:${IMAGE_TAG:-latest}
+    image: ${DOCKERHUB_NAMESPACE:-je4nn}/travelagency-frontend:${IMAGE_TAG:-latest}
     container_name: travelagency-frontend
     depends_on:
       - backend1
