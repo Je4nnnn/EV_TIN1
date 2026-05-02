@@ -15,9 +15,13 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /workspace/target/*.jar app.jar
 
-ENV SERVER_PORT=8090
-EXPOSE 8090
+ENV SERVER_PORT=8091
+EXPOSE 8091
 
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

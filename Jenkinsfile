@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     parameters {
-        booleanParam(name: 'PUSH_DOCKER_IMAGES', defaultValue: true, description: 'Construye y sube imagenes Docker a DockerHub')
+        booleanParam(name: 'BUILD_DOCKER_IMAGES', defaultValue: true, description: 'Construye las imagenes Docker del backend y frontend')
+        booleanParam(name: 'PUSH_DOCKER_IMAGES', defaultValue: true, description: 'Sube las imagenes Docker a DockerHub')
         string(name: 'DOCKERHUB_NAMESPACE', defaultValue: 'je4nnnn', description: 'Namespace o usuario de DockerHub')
         string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Tag de las imagenes Docker')
     }
@@ -37,7 +38,7 @@ pipeline {
             }
             post {
                 always {
-                    junit 'Backend/target/surefire-reports/*.xml'
+                    junit allowEmptyResults: true, testResults: 'Backend/target/surefire-reports/*.xml'
                     archiveArtifacts artifacts: 'Backend/target/*.jar', onlyIfSuccessful: true
                 }
             }
@@ -58,6 +59,9 @@ pipeline {
         }
 
         stage('Build Docker Images') {
+            when {
+                expression { return params.BUILD_DOCKER_IMAGES }
+            }
             steps {
                 sh 'docker build -t ${BACKEND_IMAGE} Backend'
                 sh 'docker build --build-arg VITE_API_BASE_URL=/ --build-arg VITE_PAYROLL_BACKEND_SERVER=/ -t ${FRONTEND_IMAGE} Frontend'
@@ -66,7 +70,7 @@ pipeline {
 
         stage('Push Docker Images') {
             when {
-                expression { return params.PUSH_DOCKER_IMAGES }
+                expression { return params.BUILD_DOCKER_IMAGES && params.PUSH_DOCKER_IMAGES }
             }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_TOKEN')]) {

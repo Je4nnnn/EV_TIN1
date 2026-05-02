@@ -49,12 +49,12 @@ public class DemoDataInitializer {
 
     private Map<String, UserEntity> ensureDemoUsers(UserService userService, UserRepository userRepository) {
         List<UserEntity> defaultUsers = List.of(
-                buildUser("11111111K", "Camila Herrera", "camila@travelagency.cl", "+56911111111", LocalDate.of(1994, 6, 12)),
-                buildUser("22222222K", "Diego Mella", "diego@travelagency.cl", "+56922222222", LocalDate.of(1989, 9, 3)),
-                buildUser("33333333K", "Fernanda Soto", "fernanda@travelagency.cl", "+56933333333", LocalDate.of(1996, 1, 20)),
-                buildUser("44444444K", "Matias Rojas", "matias@travelagency.cl", "+56944444444", LocalDate.of(1992, 11, 8)),
-                buildUser("55555555K", "Paula Diaz", "paula@travelagency.cl", "+56955555555", LocalDate.of(1987, 4, 18)),
-                buildUser("66666666K", "Javiera Pino", "javiera@travelagency.cl", "+56966666666", LocalDate.of(1998, 7, 27))
+                buildUser("111111111", "Camila Herrera", "camila@travelagency.cl", "+56911111111", LocalDate.of(1994, 6, 12)),
+                buildUser("222222222", "Diego Mella", "diego@travelagency.cl", "+56922222222", LocalDate.of(1989, 9, 3)),
+                buildUser("333333333", "Fernanda Soto", "fernanda@travelagency.cl", "+56933333333", LocalDate.of(1996, 1, 20)),
+                buildUser("444444444", "Matias Rojas", "matias@travelagency.cl", "+56944444444", LocalDate.of(1992, 11, 8)),
+                buildUser("555555555", "Paula Diaz", "paula@travelagency.cl", "+56955555555", LocalDate.of(1987, 4, 18)),
+                buildUser("666666666", "Javiera Pino", "javiera@travelagency.cl", "+56966666666", LocalDate.of(1998, 7, 27))
         );
 
         Map<String, UserEntity> demoUsers = new LinkedHashMap<>();
@@ -131,8 +131,8 @@ public class DemoDataInitializer {
                 today.plusDays(1),
                 "Noche",
                 requireRoom(roomRepository, "S001"),
-                demoUsers.get("11111111K"),
-                List.of(demoUsers.get("11111111K"))
+                demoUsers.get("111111111"),
+                List.of(demoUsers.get("111111111"))
         ));
 
         reservationService.saveReservation(buildReservation(
@@ -140,11 +140,11 @@ public class DemoDataInitializer {
                 today.plusDays(4),
                 "Completo",
                 requireRoom(roomRepository, "D001"),
-                demoUsers.get("22222222K"),
+                demoUsers.get("222222222"),
                 List.of(
-                        demoUsers.get("22222222K"),
-                        demoUsers.get("33333333K"),
-                        demoUsers.get("44444444K")
+                        demoUsers.get("222222222"),
+                        demoUsers.get("333333333"),
+                        demoUsers.get("444444444")
                 )
         ));
 
@@ -153,10 +153,10 @@ public class DemoDataInitializer {
                 today.plusDays(6),
                 "Noche",
                 requireRoom(roomRepository, "SU001"),
-                demoUsers.get("55555555K"),
+                demoUsers.get("555555555"),
                 List.of(
-                        demoUsers.get("55555555K"),
-                        demoUsers.get("66666666K")
+                        demoUsers.get("555555555"),
+                        demoUsers.get("666666666")
                 )
         ));
     }
