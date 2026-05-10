@@ -1,6 +1,7 @@
 {
   "realm": "hotelrm",
   "enabled": true,
+  "sslRequired": "none",
   "displayName": "HotelRM",
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,

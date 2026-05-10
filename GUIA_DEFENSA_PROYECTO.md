@@ -903,7 +903,504 @@ FRONTEND_PORT_DOCKER=3001 docker compose up --build
 
 ---
 
-## 19. Respuestas estrategicas si te hacen preguntas dificiles
+## 19. Despliegue en AWS EC2 realizado para la nube
+
+Para la etapa de nube desplegue el proyecto en una instancia `EC2` de AWS usando Docker Compose. La idea fue mantener la misma arquitectura local, pero ejecutandola en una maquina virtual publica.
+
+### Decision de infraestructura
+
+Use:
+
+- Proveedor: `AWS`
+- Servicio: `EC2`
+- Region: `us-east-1` / Norte de Virginia
+- Sistema operativo: `Amazon Linux 2023`
+- Arquitectura: `x86_64`
+- Tipo de instancia: `c7i-flex.large`
+- Disco: `20 GiB gp3`
+- Llave SSH: `hotelrm-key.pem`
+
+Escogi `EC2` porque corresponde a `IaaS`: yo administro la maquina, instalo Docker y decido como levantar los servicios. Para una evaluacion universitaria es una opcion clara porque permite mostrar sistema operativo, red, puertos, contenedores y despliegue completo.
+
+No use `t3.micro` porque el proyecto levanta varios servicios al mismo tiempo:
+
+- PostgreSQL
+- Keycloak
+- tres replicas del backend Spring Boot
+- frontend Nginx
+- Nginx frontal
+
+Una instancia con `1 GB RAM` puede quedar corta para Keycloak y Java. Por eso use `c7i-flex.large`, que entrega mas memoria y estabilidad para la demo, manteniendome dentro del contexto de creditos/free tier disponibles en la cuenta.
+
+### Reglas de red usadas
+
+Configure un Security Group con:
+
+- `22/tcp` para SSH
+- `80/tcp` para la aplicacion web por HTTP
+- `8080/tcp` para Keycloak
+
+El backend tambien publica `8091`, pero la ruta recomendada es entrar por Nginx usando:
+
+```text
+http://<IP_PUBLICA>/api/...
+```
+
+Para la demo se dejo acceso abierto desde `0.0.0.0/0`, porque el objetivo era evitar bloqueos de red durante la defensa. En un entorno real, SSH deberia restringirse a mi IP y Keycloak deberia ir detras de HTTPS.
+
+### Preparacion de la instancia
+
+Luego de lanzar la instancia me conecte por SSH:
+
+```bash
+chmod 400 hotelrm-key.pem
+ssh -i hotelrm-key.pem ec2-user@<IP_PUBLICA>
+```
+
+Instale las herramientas necesarias:
+
+```bash
+sudo dnf update -y
+sudo dnf install -y git docker rsync
+sudo systemctl enable --now docker
+sudo usermod -aG docker ec2-user
+```
+
+Despues cerre y volvi a abrir la sesion para que el grupo `docker` aplicara.
+
+Instale Docker Compose como plugin:
+
+```bash
+mkdir -p ~/.docker/cli-plugins
+curl -SL https://github.com/docker/compose/releases/download/v5.1.2/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+chmod +x ~/.docker/cli-plugins/docker-compose
+docker compose version
+```
+
+Tambien instale `buildx`, porque `docker compose build` lo requeriria:
+
+```bash
+curl -SL https://github.com/docker/buildx/releases/download/v0.17.1/buildx-v0.17.1.linux-amd64 -o ~/.docker/cli-plugins/docker-buildx
+chmod +x ~/.docker/cli-plugins/docker-buildx
+docker buildx version
+```
+
+### Como subi el proyecto
+
+Use `rsync` desde mi computador hacia la EC2 para copiar el proyecto sin subir archivos pesados o temporales:
+
+```bash
+rsync -av --delete \
+  -e "ssh -i ~/Escritorio/hotelrm-key.pem" \
+  --exclude='.git' \
+  --exclude='.idea' \
+  --exclude='.env' \
+  --exclude='Frontend/node_modules' \
+  --exclude='Frontend/dist' \
+  --exclude='Backend/target' \
+  --exclude='tools/jdk-21' \
+  --exclude='tools/jdk-21.tar.gz' \
+  --exclude='tools/.cache' \
+  EV_TIN1/ ec2-user@<IP_PUBLICA>:~/EV_TIN1/
+```
+
+Luego configure variables de entorno desde `.env.aws.example`:
+
+```bash
+cd ~/EV_TIN1
+cp .env.aws.example .env
+sed -i 's|<EC2_PUBLIC_IP>|<IP_PUBLICA>|g' .env
+```
+
+Las variables importantes fueron:
+
+- `APP_PORT=80`
+- `KEYCLOAK_PORT_DOCKER=8080`
+- `VITE_KEYCLOAK_PUBLIC_URL=http://<IP_PUBLICA>:8080`
+- `KEYCLOAK_ISSUER_URI_DOCKER=http://<IP_PUBLICA>:8080/realms/hotelrm`
+- `VITE_API_BASE_URL_DOCKER=/`
+
+Con esto el frontend usa rutas relativas para la API, y Nginx reenvia `/api` al backend.
+
+### Problemas reales encontrados y solucionados
+
+#### 1. Docker Compose requeria Buildx
+
+Al ejecutar:
+
+```bash
+docker compose up --build -d
+```
+
+aparecio:
+
+```text
+compose build requires buildx 0.17.0 or later
+```
+
+Solucion: instale `docker-buildx` como plugin de Docker CLI.
+
+#### 2. Keycloak fallo al importar el realm por JSON invalido
+
+Al intentar agregar redirects con `sed`, el archivo `keycloak/hotelrm-realm.json` quedo con comas mal ubicadas y Keycloak fallo con:
+
+```text
+Unexpected character ',' expected a value
+```
+
+Solucion: limpie las lineas invalidas, valide el JSON y luego agregue los cambios correctamente.
+
+Validacion usada:
+
+```bash
+python3 -m json.tool keycloak/hotelrm-realm.json >/dev/null && echo "JSON OK"
+```
+
+#### 3. Keycloak exigia HTTPS
+
+En navegador aparecio:
+
+```text
+HTTPS required
+```
+
+Esto ocurria porque Keycloak, al estar expuesto por IP publica y HTTP, exigia SSL para peticiones externas.
+
+Solucion:
+
+```bash
+docker compose exec keycloak /opt/keycloak/bin/kcadm.sh config credentials \
+  --server http://localhost:8080 \
+  --realm master \
+  --user admin \
+  --password admin
+
+docker compose exec keycloak /opt/keycloak/bin/kcadm.sh update realms/master -s sslRequired=none
+docker compose exec keycloak /opt/keycloak/bin/kcadm.sh update realms/hotelrm -s sslRequired=none
+```
+
+Tambien deje persistido en `keycloak/hotelrm-realm.json`:
+
+```json
+"sslRequired": "none"
+```
+
+Esto es aceptable para la demo universitaria, pero en produccion se deberia usar HTTPS real.
+
+#### 4. El boton de login no funcionaba por Web Crypto en HTTP
+
+El frontend cargaba, pero `INICIAR SESION` no funcionaba. En la consola del navegador aparecio:
+
+```text
+Web Crypto API is not available
+```
+
+La causa fue que `keycloak-js` moderno requiere APIs criptograficas del navegador, y Chrome solo las habilita en contextos seguros (`HTTPS` o `localhost`). Una IP publica con `HTTP` no cumple esa condicion.
+
+Solucion final: usar una version anterior compatible para esta demo:
+
+- contenedor Keycloak: `quay.io/keycloak/keycloak:21.1.2`
+- paquete frontend: `keycloak-js: 21.1.2`
+
+Tambien regenere `package-lock.json` porque el Dockerfile del frontend usa `npm ci`.
+
+```bash
+cd ~/EV_TIN1/Frontend
+docker run --rm -v "$PWD":/app -w /app node:20-alpine npm install --package-lock-only
+```
+
+#### 5. Problema con PKCE
+
+Despues del downgrade aparecio:
+
+```text
+Missing parameter: code_challenge_method
+```
+
+La causa fue una inconsistencia: Keycloak esperaba PKCE, pero el frontend no estaba enviando el metodo correctamente.
+
+Solucion: deje ambos lados consistentes con `S256`.
+
+En frontend:
+
+```js
+keycloak.init({
+  onLoad: 'check-sso',
+  pkceMethod: 'S256',
+  checkLoginIframe: false,
+  silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
+})
+```
+
+En Keycloak:
+
+```bash
+docker compose exec -T keycloak /opt/keycloak/bin/kcadm.sh get clients/$CLIENT_ID -r hotelrm > /tmp/hotelrm-client.json
+```
+
+Luego deje en el cliente:
+
+```json
+"attributes": {
+  "pkce.code.challenge.method": "S256"
+}
+```
+
+Con esto el flujo de autenticacion quedo funcionando correctamente.
+
+#### 6. Nginx frontal se detuvo una vez
+
+Despues de reiniciar servicios, el contenedor `travelagency-nginx` quedo detenido porque intento iniciar antes de resolver `backend1`.
+
+Solucion:
+
+```bash
+docker compose up -d nginx
+```
+
+Luego valide:
+
+```bash
+curl -i http://localhost/actuator/health
+```
+
+Respuesta esperada:
+
+```json
+{"status":"UP"}
+```
+
+### Resultado final
+
+Finalmente la aplicacion quedo disponible en:
+
+```text
+http://<IP_PUBLICA>/home
+```
+
+Keycloak quedo disponible en:
+
+```text
+http://<IP_PUBLICA>:8080
+```
+
+Credenciales de la app:
+
+```text
+hotelrm-admin
+changeit
+```
+
+Credenciales de administracion de Keycloak:
+
+```text
+admin
+admin
+```
+
+Se valido que:
+
+- el frontend carga desde EC2
+- la API responde por Nginx
+- `GET /actuator/health` retorna `UP`
+- Keycloak permite iniciar sesion
+- el usuario `hotelrm-admin` entra con rol `hotelrm_admin`
+- se pueden crear, ver, actualizar y eliminar datos
+- las rutas administrativas quedan protegidas por rol
+
+### Como explicarlo al profesor
+
+> “Levante una instancia EC2 como IaaS. Instale Docker, Docker Compose y Buildx. Subi el proyecto con rsync y configure variables de entorno para usar la IP publica. El stack corre en contenedores: PostgreSQL, Keycloak, backend replicado, frontend y Nginx frontal. Tuve que resolver problemas reales de nube: puertos, Security Groups, URLs publicas de Keycloak, SSL requerido, Web Crypto en HTTP y compatibilidad de version de Keycloak. Finalmente deje el login funcionando con Keycloak 21.1.2 y PKCE S256, y valide que la aplicacion funciona desde la IP publica de AWS.”
+
+### Como apagar para no gastar creditos
+
+Para detener solo la aplicacion dentro de la instancia:
+
+```bash
+cd ~/EV_TIN1
+docker compose down
+```
+
+Para dejar de gastar por la instancia EC2, se debe detener desde la consola AWS:
+
+1. EC2
+2. Instancias
+3. seleccionar `hotelrm-ec2`
+4. Estado de la instancia
+5. Detener instancia
+
+Importante:
+
+- `Detener` conserva el disco, pero la IP publica puede cambiar al volver a iniciar.
+- `Terminar` elimina la instancia.
+- Si cambia la IP publica, hay que actualizar `.env`, redirects de Keycloak y reconstruir frontend.
+- El volumen EBS puede seguir generando costo pequeno aunque la instancia este detenida.
+
+---
+
+## 20. GitFlow, SemVer y GitHub Actions
+
+### Decision tomada
+
+Para la ultima etapa del proyecto agregue una estrategia de ramas basada en GitFlow y automatizacion con GitHub Actions.
+
+La estrategia propuesta es:
+
+- `main`: rama estable, usada para versiones listas para demostrar.
+- `develop`: rama de integracion antes de pasar a estable.
+- `feature/<nombre>`: ramas para nuevas funcionalidades o ajustes.
+- `release/<version>`: preparacion de una version final.
+- `hotfix/<nombre>`: correcciones urgentes desde `main`.
+
+Esta opcion es conveniente para el proyecto porque no elimina Jenkins; lo complementa. Jenkins queda como pipeline local visto en clases y GitHub Actions queda como pipeline remoto asociado al repositorio en GitHub.
+
+### Versionamiento semantico
+
+Use versionamiento semantico con tags:
+
+```text
+vMAJOR.MINOR.PATCH
+```
+
+Ejemplo:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+El tag `v1.0.0` representa una version estable del proyecto. Al crear ese tag se activa el workflow de publicacion Docker.
+
+### GitHub Actions agregados
+
+Agregue dos workflows:
+
+```text
+.github/workflows/ci.yml
+.github/workflows/docker-publish.yml
+```
+
+`ci.yml` valida el proyecto en cada `push`, `pull_request` o ejecucion manual:
+
+- instala Java 21
+- ejecuta pruebas del backend con Maven
+- instala Node 20
+- ejecuta lint del frontend
+- construye el frontend con Vite
+
+`docker-publish.yml` se ejecuta cuando se crea un tag SemVer como `v1.0.0` o manualmente desde GitHub Actions:
+
+- inicia sesion en DockerHub usando secrets
+- construye imagen backend
+- construye imagen frontend
+- publica las imagenes en DockerHub
+- genera tags como `1.0.0`, `1.0` y `latest`
+
+### Secrets necesarios
+
+En GitHub configure:
+
+```text
+Settings > Secrets and variables > Actions > Secrets
+```
+
+Secrets:
+
+```text
+DOCKERHUB_USERNAME
+DOCKERHUB_TOKEN
+```
+
+`DOCKERHUB_USERNAME` debe ser el usuario real de DockerHub. En mi caso, si uso el mismo namespace que Jenkins, corresponde a `je4nn`. El valor `mtisw` solo se usa si el profesor entrega esa cuenta.
+
+`DOCKERHUB_TOKEN` es un token de DockerHub con permiso `Read & Write`.
+
+Estos valores se configuraron como `Repository secrets`, no como `Environment secrets`, porque el workflow los consume directamente desde el repositorio:
+
+```text
+secrets.DOCKERHUB_USERNAME
+secrets.DOCKERHUB_TOKEN
+```
+
+Para el token, cree un Personal Access Token en DockerHub dedicado al pipeline de GitHub Actions, con permiso `Read & Write`. Esto evita usar la contrasena de DockerHub y permite revocar solo ese token si alguna vez se necesita.
+
+### Variables recomendadas
+
+Como el frontend usa Vite, la URL de Keycloak queda incorporada al momento de construir la imagen. Por eso, si quiero que GitHub Actions publique una imagen lista para EC2, debo definir:
+
+```text
+Settings > Secrets and variables > Actions > Variables
+```
+
+Variables:
+
+```text
+VITE_API_BASE_URL=/
+VITE_PAYROLL_BACKEND_SERVER=/
+VITE_KEYCLOAK_ENABLED=true
+VITE_KEYCLOAK_URL=http://100.53.75.196:8080
+VITE_KEYCLOAK_REALM=hotelrm
+VITE_KEYCLOAK_CLIENT_ID=hotelrm-frontend
+VITE_KEYCLOAK_ADMIN_ROLE=hotelrm_admin
+```
+
+Si cambia la IP publica de EC2, se debe actualizar `VITE_KEYCLOAK_URL` antes de publicar una nueva imagen frontend.
+
+Estas variables se configuraron como `Repository variables`, no como `Environment variables`, porque el proyecto no separa ambientes formales como `staging` y `production`. La variable mas importante es `VITE_KEYCLOAK_URL`, ya que Vite la incorpora dentro del build estatico del frontend.
+
+### Pasos finales para que el pipeline quede en success
+
+Despues de configurar secrets y variables, los pasos finales son:
+
+```bash
+git checkout -b feature/github-actions-ci
+git add .github/workflows docs/GIT_GITHUB_ACTIONS.md docker-compose.yml keycloak/hotelrm-realm.json Frontend/package.json Frontend/package-lock.json GUIA_DEFENSA_PROYECTO.md
+git commit -m "ci: add github actions docker publish workflow"
+git push -u origin feature/github-actions-ci
+```
+
+Luego se crea un Pull Request hacia `develop` o `main`, segun la estrategia que se quiera demostrar. El workflow `CI` debe quedar en verde porque valida:
+
+- pruebas del backend con Java 21 y Maven
+- lint del frontend
+- build del frontend
+
+Para publicar imagenes Docker se debe crear un tag semantico:
+
+```bash
+git checkout main
+git pull origin main
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Ese tag activa `Docker Publish` y sube las imagenes:
+
+```text
+je4nn/travelagency-backend
+je4nn/travelagency-frontend
+```
+
+### Ajuste de compatibilidad con AWS
+
+El despliegue real en AWS funciono correctamente usando:
+
+```text
+Keycloak 21.1.2
+keycloak-js 21.1.2
+PKCE S256
+sslRequired=none
+```
+
+Por eso deje el repositorio alineado con esa configuracion. Esto evita que GitHub Actions publique imagenes con la version nueva de Keycloak que habia causado problemas al iniciar sesion desde HTTP usando IP publica.
+
+### Como explicarlo al profesor
+
+> “Ademas del pipeline de Jenkins, agregue GitHub Actions para tener CI/CD remoto. El workflow de CI ejecuta pruebas y build en cada cambio, mientras que el workflow de Docker publica imagenes en DockerHub solo cuando creo un tag semantico como `v1.0.0`. Asi separo validacion continua de publicacion de releases, evito gastar ejecuciones innecesarias y mantengo credenciales protegidas mediante secrets.”
+
+---
+
+## 21. Respuestas estrategicas si te hacen preguntas dificiles
 
 ### Si preguntan “¿que parte consideras mas importante?”
 
@@ -931,7 +1428,6 @@ Puedes responder:
 
 ---
 
-## 20. Cierre corto para decir al final
+## 22. Cierre corto para decir al final
 
 > “El proyecto implementa una aplicacion web completa con frontend y backend desacoplados, persistencia relacional, autenticacion centralizada con Keycloak, despliegue con Docker, automatizacion con Jenkins y pruebas con cobertura medida por JaCoCo.”
-
