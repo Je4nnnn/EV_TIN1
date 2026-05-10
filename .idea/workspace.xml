@@ -6,7 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="5b02bcf5-f91a-45ca-98ab-099f07d27ac8" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Jenkinsfile" beforeDir="false" afterPath="$PROJECT_DIR$/Jenkinsfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -14,7 +14,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="619" />
+    <option name="cachedIndexableFilesCount" value="621" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -183,7 +183,10 @@
       <workItem from="1777703323841" duration="2317000" />
       <workItem from="1777715555101" duration="88000" />
       <workItem from="1777715781112" duration="1437000" />
-      <workItem from="1777717483505" duration="1709000" />
+      <workItem from="1777717483505" duration="1994000" />
+      <workItem from="1777929617173" duration="8000" />
+      <workItem from="1778178622900" duration="3543000" />
+      <workItem from="1778291190015" duration="5586000" />
     </task>
     <servers />
   </component>
